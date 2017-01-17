@@ -9,63 +9,62 @@ Some security enterprise management systems are capable of querying web APIs for
 
 ## Getting Started
 
-Start domain_stats.py
+**Start domain_stats.py**
 
 ```
 python domain_stats.py -ip 127.0.0.1 8000
 ```
 
+## Queries
 
 The API is simple.  Once the server is started you can query either the Alexa ranking of a domain:
 
-http://<ip>:<port>/alexa/<domain>
+`http://<ip>:<port>/alexa/<domain>`
 
-```
-Example: 
+#### Example
+
+```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/alexa/sans.org
 25646
 ```
 
-This tells us that SANS.ORG is the 25646th most popular domain on the internet.  So it probably isn't a phishing site.  NOTE: The alexa option is only available with the alexa database is provided as a command line option.   You can download a copy of the data at this url http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+This tells us that SANS.ORG is the 25646th most popular domain on the internet.  So it probably isn't a phishing site.  
+
+_**NOTE:** The alexa option is only available with the alexa database is provided as a command line option. You can download a copy of the data at http://s3.amazonaws.com/alexa-static/top-1m.csv.zip_
+
 
 You can also query whois domain information for a domain.   This query will return the entire whois record for sans.org
 
-```
+```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/domain/sans.org
 ```
 
 Alternatively you can query individual entries in the whois record by including field names in the path.
 
-```
+```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/domain/creation_date/sans.org
 1995-08-04 04:00:00;
 ```
 
-### Queryable Fields
+Queryable Fields
+------
 
-1. updated_date
-2. status
-3. name
-4. dnssec
-5. city
-6. expiration_date
-7. zipcode
-8. domain_name
-9. country
-10. whois_server
-11. state
-12. registrar
-13. referral_url
-14. address
-15. name_servers
-16. org
-17. creation_date
-18. emails
-19. alexa
+| WHOIS        | Location           | Misc  |
+| ------------- |:-------------:| -----:|
+| name  | zipcode    | dnssec |
+| domain_name     | city       |   referral_url |
+| expiration_date | state      |    alexa |
+| creation_date | address     |    status |
+| updated_date | country      |     |
+| registrar |        |     |
+| whois_server|        |     |
+| emails |        |     |
+| name_servers| 
+
 
 You can query more than one field by simply listing the additional fields in the path.  The domain is always the last entry in the path.
 
-```
+```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/domain/creation_date/state/zipcode/city/sans.org
 1995-08-04 04:00:00; MD; 20814; Bethesda;
 ```
@@ -76,13 +75,13 @@ Consider these two examples:
 
 ### Example 1
 
-```python
+```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/domain/name_servers/google.com
 ns4.google.com;
 ```
 ### Example 2
 
-```python
+```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/domain/name_servers*/google.com
 [u'NS1.GOOGLE.COM', u'NS2.GOOGLE.COM', u'NS3.GOOGLE.COM', u'NS4.GOOGLE.COM', u'ns3.google.com', u'ns1.google.com', u'ns2.google.com', u'ns4.google.com']; 
 ```
@@ -92,7 +91,7 @@ The first query returns a single name server where the second returns all the na
 
 ## Arguments
 
-```python
+```bash
 student@SEC573:~$ python domain_stats.py --help
 usage: domain_stats.py [-h] [-ip ADDRESS] [-c CACHE_TIME] [-v] [-a ALEXA]
                        [--all] [--preload PRELOAD] [--delay DELAY]
@@ -125,17 +124,16 @@ optional arguments:
                         this iterval (seconds). Default is 86400
 ```
 
-Most of these arguments are optional.  The only thing you **MUST** specify is which port you want it to listen on.   The other options you probably want to use are --alexa (or -a), --delay and --preload.
+_Most of these arguments are optional._  The only thing you **MUST** specify is which port you want it to listen on.   The other options you probably want to use are --alexa (or -a), --delay and --preload.
 
---alexa is followed by the path to the alexa top 1 million csv file discussed earlier. --preload is followed by an integer that says how many of those alexa domains you want to automatically do whois looks for to store in the cache on the server.
---delay can be used to cause control the delay between whois queries when preloading the servers cache.  Most of the other options control that cache.  By default when an domain is queried from a whois server it is cached for 1 hour.  You can change this with --cache-time.
---cache-time is followed by the number of seconds to store an entry in the cache. 86400 seconds is one day.   Setting the --cache-time to 0 will keep entries in memory forever (or until all memory is consumed and the server crashes)  The --garbage-cycle option specifies how long to delay between cycles of cleaning up the cached entries older than --cache-time. 
+__--alexa__ is followed by the path to the alexa top 1 million csv file discussed earlier. --preload is followed by an integer that says how many of those alexa domains you want to automatically do whois looks for to store in the cache on the server.
+
+__--delay__ can be used to cause control the delay between whois queries when preloading the servers cache.  Most of the other options control that cache.  By default when an domain is queried from a whois server it is cached for 1 hour.  You can change this with --cache-time.
+
+__--cache-time__ is followed by the number of seconds to store an entry in the cache. 86400 seconds is one day.   Setting the --cache-time to 0 will keep entries in memory forever (or until all memory is consumed and the server crashes)  The __--garbage-cycle__ option specifies how long to delay between cycles of cleaning up the cached entries older than --cache-time. 
 
 Here is an example of starting the server on port 8000 and only loading the top 100 most common alexa entries
 
-```python
+```bash
 student@SEC573:~$ python domain_stats.py --preload 100 -a ~/Downloads/top-1m.csv 8000 
 ```
-
-
-
