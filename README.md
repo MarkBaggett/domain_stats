@@ -2,7 +2,7 @@
 #Version 1.0 
 #Written by Mark Baggett @markbaggett
 #Under direction of Justin Henderson @securitymapper
-#Thanks to Justin Henderson for being the complete creative force behind th program.  He said what he wanted.  I wrote it. 
+#Thanks to Justin Henderson for being the complete creative force behind the program.  He said what he wanted.  I wrote it. 
 
 domain_stats.py is a web API to deliver domain information from whois and alexa. 
 Some security enterprise management systems are capable of querying web APIs for additional information.  This API provides easy access to that information for those systems.
