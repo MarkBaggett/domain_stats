@@ -152,7 +152,7 @@ def preload_domains(domain_list, server, delay):
     server.safe_print("Now preloading %d domains from alexa in the whois cache." %(len(domain_list)))
     dcount = 0
     dtenth = len(domain_list)/10
-    for eachalexa,eachdomain in re.findall(r"^(\d+),(.*)", "".join(domain_list), re.MULTILINE):
+    for eachalexa,eachdomain in re.findall(r"^(\d+),(\S+)", "".join(domain_list), re.MULTILINE):
         dcount += 1
         if (dcount % dtenth) == 0:
             server.safe_print("Loaded %d percent of whois cache." % (float(dcount)/len(domain_list)*100))
