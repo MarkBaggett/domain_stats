@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 #domain_stats.py by Mark Baggett
 #Twitter @MarkBaggett
 
@@ -40,7 +41,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
             cmdstr=re.search("cmd=(?:domain|alexa|created)",urlparams)
             tgtstr =  re.search("tgt=",urlparams)
             if not cmdstr or not tgtstr:
-                self.wfile.write('<html><body>API Documentation<br> http://%s:%s/?cmd=measure&tgt=&ltstring&gt <br> http://%s:%s/?cmd=normal&tgt=&ltstring&gt <br> http://%s:%s/?cmd=normal&tgt=&ltstring&gt&weight=&ltweight&gt </body></html>' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1]))
+                self.wfile.write('<html><body>API Documentation<br> http://%s:%s/cmd/tgt <br> cmd = domain, alexa or created <br> tgt = domain name </body></html>' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1]))
                 return
             params={}
             try:
@@ -181,11 +182,10 @@ def main():
     parser.add_argument('-v','--verbose',action='count',required=False,help='Print verbose output to the server screen.  -vv is more verbose.')
     parser.add_argument('-a','--alexa',required=False,help='Provide a local file path to an Alexa top-1m.csv')
     parser.add_argument('--all',action="store_true",required=False,help='Return all of the values in a field if multiples exist. By default it only returns the last value.')
-    parser.add_argument('--preload',type=int,default=1000,help='preload cache with this number of the top Alexa domain entries.  Default 1000')
+    parser.add_argument('--preload',type=int,default=1000,help='preload cache with this number of the top Alexa domain entries. set to 0 to disable.  Default 1000')
     parser.add_argument('--delay',type=float,default=0.1,help='Delay between whois lookups while staging the initial cache.  Default is 0.1')
     parser.add_argument('--garbage-cycle',type=int,default=86400,help='Delete entries in cache older than --cache-time at this iterval (seconds).  Default is 86400')
 
-    #args = parser.parse_args("-s 1 -vv 8081 english_lowercase.freq".split())
     args = parser.parse_args()
 
     #Setup the server.
@@ -199,8 +199,9 @@ def main():
                 server.safe_print("Preloading %s alexa cache" % (args.preload))
                 alexa_file = open(args.alexa).readlines()
                 server.alexa = dict([(a,b) for b,a in re.findall(r"^(\d+),(\S+)", "".join(alexa_file), re.MULTILINE)])
-                th = threading.Thread(target=preload_domains, args = (alexa_file[:args.preload], server, args.delay))
-                th.start()
+                if args.preload:
+                    th = threading.Thread(target=preload_domains, args = (alexa_file[:args.preload], server, args.delay))
+                    th.start()
             except Exception as e:
                 server.safe_print("Unable to parse alexa file:%s" % (str(e)))
             finally:
