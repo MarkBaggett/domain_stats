@@ -1,10 +1,10 @@
-#domain_stats.py
-#Version 1.0 
-#Written by Mark Baggett @markbaggett
-#Under direction of Justin Henderson @securitymapper
-#Thanks to Justin Henderson for being the complete creative force behind the program.  He said what he wanted.  I wrote it. 
+# domain_stats.py
+# Version 1.0 
+# Written by Mark Baggett @markbaggett
+# Under direction of Justin Henderson @securitymapper
+# Thanks to Justin Henderson for being the complete creative force behind the program.  He said what he wanted.  I wrote it. 
 
-domain_stats.py is a web API to deliver domain information from whois and alexa. 
+domain_stats.py is a web API to deliver domain information from whois and Alexa/Cisco Top 1 million ranking. 
 Some security enterprise management systems are capable of querying web APIs for additional information.  This API provides easy access to that information for those systems.
 
 ## Getting Started
@@ -17,7 +17,7 @@ python domain_stats.py -ip 127.0.0.1 8000
 
 ## Queries
 
-The API is simple.  Once the server is started you can query either the Alexa ranking of a domain:
+The API is simple.  Once the server is started you can query the Alexa/Cisco ranking of a domain:
 
 `http://<ip>:<port>/alexa/<domain>`
 
@@ -30,10 +30,14 @@ student@SEC573:~$ curl http://127.0.0.1:8000/alexa/sans.org
 
 This tells us that SANS.ORG is the 25646th most popular domain on the internet.  So it probably isn't a phishing site.  
 
-_**NOTE:** The alexa option is only available with the alexa database is provided as a command line option. You can download a copy of the data at http://s3.amazonaws.com/alexa-static/top-1m.csv.zip_
+_**NOTE:** The alexa option is only available when the alexa/cisco database is provided as a command line option. You can download a copy of the data at http://s3.amazonaws.com/alexa-static/top-1m.csv.zip_
+
+**NOTE FURTHER**  Alexa has discontinued their support for the top 1 million.  Cisco Umbrella is now offering a free alternative.  It can be downloaded here https://s3-us-west-1.amazonaws.com/umbrella-static/index.html  The files are using the exact same format and should be used with this tool instead of the alexa data which will quickly become outdated.   Thanks to Justin Henderson for finding the link to the Cisco replacment!
+
+As not to break startup scripts, etc in existing deployments, we will keep the `-a` and `--alexa` command line arguments.
 
 
-You can also query whois domain information for a domain.   This query will return the entire whois record for sans.org
+You can also query whois domain information for a domain.   This query will return the entire whois record for sans.org:
 
 ```bash
 student@SEC573:~$ curl http://127.0.0.1:8000/domain/sans.org
@@ -116,7 +120,7 @@ optional arguments:
   --all                 Return all of the values in a field if multiples
                         exist. By default it only returns the last value.
   --preload PRELOAD     preload cache with this number of the top Alexa domain
-                        entries. Default 1000
+                        entries. set to 0 to disable preloading. Default 1000
   --delay DELAY         Delay between whois lookups while staging the initial
                         cache. Default is 0.1
   --garbage-cycle GARBAGE_CYCLE
@@ -126,7 +130,7 @@ optional arguments:
 
 _Most of these arguments are optional._  The only thing you **MUST** specify is which port you want it to listen on.   The other options you probably want to use are --alexa (or -a), --delay and --preload.
 
-__--alexa__ is followed by the path to the alexa top 1 million csv file discussed earlier. --preload is followed by an integer that says how many of those alexa domains you want to automatically do whois looks for to store in the cache on the server.
+__--alexa__ is followed by the path to the alexa top 1 million csv file discussed earlier. --preload is followed by an integer that says how many of those alexa domains you want to automatically do whois lookups for to store in the cache on the server.  As stated above, you should use the Cisco Umbrella files now that Alexa has been discontinued. : https://s3-us-west-1.amazonaws.com/umbrella-static/index.html  
 
 __--delay__ can be used to cause control the delay between whois queries when preloading the servers cache.  Most of the other options control that cache.  By default when an domain is queried from a whois server it is cached for 1 hour.  You can change this with --cache-time.
 
