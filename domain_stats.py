@@ -16,10 +16,17 @@ import datetime
 
 try:
     import whois
+    #import pythonwhois
 except Exception as e:
     print(str(e))
     print("You need to install the Python whois module.  Install PIP (https://bootstrap.pypa.io/get-pip.py).  Then 'pip install python-whois' ")
     sys.exit(0)
+
+def json_fallback(obj):
+	if isinstance(obj, datetime.datetime):
+		return obj.isoformat()
+	else:
+		return obj
 
 class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -80,6 +87,11 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if self.server.args.verbose: self.server.safe_print ("Querying the web", params['tgt'])
                     domain_info = whois.whois(params['tgt'])
+
+                    #domain_info = pythonwhois.net.get_whois_raw(params['tgt'], with_server_list=False)
+                    #domain_info = pythonwhois.parse.parse_raw_whois(domain_info, normalized=True)
+
+                    # print('TEST TEST TEST: ' + str(domain_info))
                     if not domain_info.get('creation_date'):
                         self.wfile.write(str("No whois record for %s" % (params['tgt'])))
                         return
@@ -159,6 +171,9 @@ def preload_domains(domain_list, server, delay):
             server.safe_print("Loaded %d percent of whois cache." % (float(dcount)/len(domain_list)*100))
         try:
             domain_info = whois.whois(eachdomain)
+            #domain_info = pythonwhois.get_whois(eachdomain)
+            #domain_info = pythonwhois.net.get_whois_raw(eachdomain, with_server_list=False)
+            #domain_info = pythonwhois.parse.parse_raw_whois(domain_info, normalized=True)
             if not any(domain_info.values()):
                 server.safe_print("No whois record for %s" % (eachdomain))
                 continue
@@ -185,6 +200,7 @@ def main():
     parser.add_argument('--preload',type=int,default=1000,help='preload cache with this number of the top Alexa domain entries. set to 0 to disable.  Default 1000')
     parser.add_argument('--delay',type=float,default=0.1,help='Delay between whois lookups while staging the initial cache.  Default is 0.1')
     parser.add_argument('--garbage-cycle',type=int,default=86400,help='Delete entries in cache older than --cache-time at this iterval (seconds).  Default is 86400')
+    parser.add_argument('--store_results', action="store_true", help="Stores results to a local database. Provides a significant performance improvement.")
 
     args = parser.parse_args()
 
