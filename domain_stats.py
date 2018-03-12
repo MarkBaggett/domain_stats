@@ -12,7 +12,6 @@ import argparse
 import sys
 import time
 import os
-import datetime
 
 try:
     import whois
@@ -57,7 +56,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                 if self.server.args.verbose: self.server.safe_print ("No Alexa data loaded. Restart program.")
                 self.wfile.write("Alexa not loaded on server. Restart server with -a or --alexa and file path.")
             else:
-                if self.server.args.verbose: self.server.safe_print ("Alexa queried for:%s" % (params['tgt']))              
+                if self.server.args.verbose: self.server.safe_print ("Alexa queried for:%s" % (params['tgt']))
                 self.wfile.write(str(self.server.alexa.get(params["tgt"],"0")))
         elif params["cmd"] == "domain":
             fields=[]
@@ -84,7 +83,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                         self.wfile.write(str("No whois record for %s" % (params['tgt'])))
                         return
                 except Exception as e:
-                    if self.server.args.verbose: self.server.safe_print ("Error querying whois server: %s" % (str(e)))     
+                    if self.server.args.verbose: self.server.safe_print ("Error querying whois server: %s" % (str(e)))
                     return
                 #Put it in the cache
                 self.server.safe_print("Caching whois record %s" % (domain_info.get("domain_name","incomplete record")))
@@ -109,7 +108,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                     fld_value = domain_info.get(fld,"no field named %s found" % (fld))
                     if (not retrieve_all) and type(fld_value)==list:
                         fld_value = fld_value[-1]
-                    self.wfile.write(str(fld_value)+"; ")              
+                    self.wfile.write(str(fld_value)+"; ")
         return
 
     def log_message(self, format, *args):
@@ -163,7 +162,7 @@ def preload_domains(domain_list, server, delay):
                 server.safe_print("No whois record for %s" % (eachdomain))
                 continue
         except Exception as e:
-            if args.verbose: server.safe_print("Error querying whois server: %s" % (str(e)))     
+            if args.verbose: server.safe_print("Error querying whois server: %s" % (str(e)))
             continue
         domain_info["time"] = time.time()
         domain_info['alexa'] = eachalexa
@@ -219,6 +218,8 @@ def main():
     while True:
         try:
             server.handle_request()
+            #if args.store_results:
+            #    domainLookup()
         except KeyboardInterrupt:
             break
 
