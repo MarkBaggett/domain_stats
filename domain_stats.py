@@ -12,21 +12,13 @@ import argparse
 import sys
 import time
 import os
-import datetime
 
 try:
     import whois
-    #import pythonwhois
 except Exception as e:
     print(str(e))
     print("You need to install the Python whois module.  Install PIP (https://bootstrap.pypa.io/get-pip.py).  Then 'pip install python-whois' ")
     sys.exit(0)
-
-def json_fallback(obj):
-	if isinstance(obj, datetime.datetime):
-		return obj.isoformat()
-	else:
-		return obj
 
 class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -64,7 +56,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                 if self.server.args.verbose: self.server.safe_print ("No Alexa data loaded. Restart program.")
                 self.wfile.write("Alexa not loaded on server. Restart server with -a or --alexa and file path.")
             else:
-                if self.server.args.verbose: self.server.safe_print ("Alexa queried for:%s" % (params['tgt']))              
+                if self.server.args.verbose: self.server.safe_print ("Alexa queried for:%s" % (params['tgt']))
                 self.wfile.write(str(self.server.alexa.get(params["tgt"],"0")))
         elif params["cmd"] == "domain":
             fields=[]
@@ -87,16 +79,11 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                 try:
                     if self.server.args.verbose: self.server.safe_print ("Querying the web", params['tgt'])
                     domain_info = whois.whois(params['tgt'])
-
-                    #domain_info = pythonwhois.net.get_whois_raw(params['tgt'], with_server_list=False)
-                    #domain_info = pythonwhois.parse.parse_raw_whois(domain_info, normalized=True)
-
-                    # print('TEST TEST TEST: ' + str(domain_info))
                     if not domain_info.get('creation_date'):
                         self.wfile.write(str("No whois record for %s" % (params['tgt'])))
                         return
                 except Exception as e:
-                    if self.server.args.verbose: self.server.safe_print ("Error querying whois server: %s" % (str(e)))     
+                    if self.server.args.verbose: self.server.safe_print ("Error querying whois server: %s" % (str(e)))
                     return
                 #Put it in the cache
                 self.server.safe_print("Caching whois record %s" % (domain_info.get("domain_name","incomplete record")))
@@ -121,7 +108,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                     fld_value = domain_info.get(fld,"no field named %s found" % (fld))
                     if (not retrieve_all) and type(fld_value)==list:
                         fld_value = fld_value[-1]
-                    self.wfile.write(str(fld_value)+"; ")              
+                    self.wfile.write(str(fld_value)+"; ")
         return
 
     def log_message(self, format, *args):
@@ -171,14 +158,11 @@ def preload_domains(domain_list, server, delay):
             server.safe_print("Loaded %d percent of whois cache." % (float(dcount)/len(domain_list)*100))
         try:
             domain_info = whois.whois(eachdomain)
-            #domain_info = pythonwhois.get_whois(eachdomain)
-            #domain_info = pythonwhois.net.get_whois_raw(eachdomain, with_server_list=False)
-            #domain_info = pythonwhois.parse.parse_raw_whois(domain_info, normalized=True)
             if not any(domain_info.values()):
                 server.safe_print("No whois record for %s" % (eachdomain))
                 continue
         except Exception as e:
-            if args.verbose: server.safe_print("Error querying whois server: %s" % (str(e)))     
+            if args.verbose: server.safe_print("Error querying whois server: %s" % (str(e)))
             continue
         domain_info["time"] = time.time()
         domain_info['alexa'] = eachalexa
@@ -200,7 +184,6 @@ def main():
     parser.add_argument('--preload',type=int,default=1000,help='preload cache with this number of the top Alexa domain entries. set to 0 to disable.  Default 1000')
     parser.add_argument('--delay',type=float,default=0.1,help='Delay between whois lookups while staging the initial cache.  Default is 0.1')
     parser.add_argument('--garbage-cycle',type=int,default=86400,help='Delete entries in cache older than --cache-time at this iterval (seconds).  Default is 86400')
-    parser.add_argument('--store_results', action="store_true", help="Stores results to a local database. Provides a significant performance improvement.")
 
     args = parser.parse_args()
 
@@ -235,6 +218,8 @@ def main():
     while True:
         try:
             server.handle_request()
+            #if args.store_results:
+            #    domainLookup()
         except KeyboardInterrupt:
             break
 

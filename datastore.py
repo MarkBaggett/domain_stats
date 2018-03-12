@@ -1,12 +1,45 @@
 #!/usr/bin/env python2
+# datastore.py by Austin Taylor
+# created for Mark Baggett's domain_stats.py
+# Twitter @huntoperator
+
+import BaseHTTPServer
+import SocketServer
+import argparse
+import json
 import logging
 import os
+import re
 import sqlite3
+import threading
+import urlparse
 
 import requests
 
+from cli_utils import DomainStatsConfig
 
-class domainLookup:
+
+class configParser:
+    CONFIG_SECTION = 'datastore'
+
+    def __init__(self, config=None):
+        self.config = config
+
+        if config is not None:
+            self.config = DomainStatsConfig(config_in=config)
+
+            self.address = self.config.get(self.CONFIG_SECTION, 'address')
+            self.port = int(self.config.get(self.CONFIG_SECTION, 'port'))
+            self.db = self.config.get(self.CONFIG_SECTION, 'db_name')
+            self.db_path = self.config.get(self.CONFIG_SECTION, 'db_path')
+            self.verbose = self.config.getbool(self.CONFIG_SECTION, 'verbose')
+
+            self.domain_stats_address = self.config.get('domain_stats', 'address')
+            self.domain_stats_port = int(self.config.get('domain_stats', 'port'))
+            self.domain_stats_url = 'http://%s:%s' % (self.domain_stats_address, self.domain_stats_port)
+
+
+class domainLookup(object):
     """
     Caches results in a database and can be synced with expiration dates set to expire
     """
@@ -31,15 +64,17 @@ class domainLookup:
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-    def __init__(self, url=None,
+    def __init__(self,
+                 domain_stats_url=None,
                  verbose=False,
                  db='whois1.db',
                  db_path='./',
                  renew_expired=False,
                  allow_none=True,
+                 config=None,
                  debug=False):
 
-        self.url = url
+        self.domain_stats_url = domain_stats_url
         self.db = db
         self.db_path = db_path
         self.columns = ['domain_name', 'org', 'creation_date', 'expiration_date']
@@ -48,6 +83,19 @@ class domainLookup:
         self.debug = debug
         self.verbose = verbose
         self.first_connect = False
+
+        if config is not None:
+            self.config = DomainStatsConfig(config_in=config)
+
+            self.address = self.config.get(self.CONFIG_SECTION, 'address')
+            self.port = self.config.get(self.CONFIG_SECTION, 'port')
+            self.db = self.config.get(self.CONFIG_SECTION, 'db_name')
+            self.db_path = self.config.get(self.CONFIG_SECTION, 'db_path')
+            self.verbose = self.config.getbool(self.CONFIG_SECTION, 'verbose')
+
+            self.domain_stats_address = self.config.get('domain_stats', 'address')
+            self.domain_stats_port = self.config.get('domain_stats', 'port')
+            self.domain_stats_url = 'http://%s:%s' % (self.domain_stats_address, self.domain_stats_port)
 
         if self.db is not None:
             if self.db_path:
@@ -67,11 +115,11 @@ class domainLookup:
                     self.first_connect = True
                     pass
 
-        if not url:
+        if not self.domain_stats_url:
             raise Exception('Please specify the URL where domain_stats is running')
         try:
             if self.db:
-                self.conn = sqlite3.connect(self.database)
+                self.conn = sqlite3.connect(self.database, check_same_thread=False)
                 self.cur = self.conn.cursor()
                 if self.first_connect:
                     self.custom_print('Creating table: domain_records')
@@ -90,7 +138,7 @@ class domainLookup:
             self.logger.debug(str(msg))
 
     def query_record(self, path, domain):
-        full_url = self.url + '/' + path + '/' + domain
+        full_url = self.domain_stats_url + '/' + path + '/' + domain
         out = None
         try:
             out = requests.get(full_url).content
@@ -147,7 +195,6 @@ class domainLookup:
     def retrieve_domain(self, domain):
         domain_present = False
         record = self.select_record(domain)
-        self.custom_print('Checking database...')
         if record:
             r = record[0]
 
@@ -162,7 +209,7 @@ class domainLookup:
             self.custom_print('%s not found in database. Querying domain_stats...' % domain)
             record = self.query_record(self.DOMAIN_STATS_PATH, domain)
             if self.NO_RECORD_RETURNED not in record:
-                # CHECK FOR NONTYPE RECORDS
+                # CHECK FOR NON-TYPE RECORDS
                 norm_record = self.normalize_record(domain, record)
                 db_ready = not any(elem is None for elem in norm_record)
 
@@ -179,12 +226,131 @@ class domainLookup:
                     self.custom_print((domain, record, norm_record), debug=self.debug)
             elif (record is None or self.NO_RECORD_RETURNED in record) and self.allow_none:
                 # NO RECORD PRESENT - populate with dummy data
+                db_record = (domain, self.NO_WHOIS, self.NO_CREATED, self.NO_EXPIRED)
+                self.record_insert(db_record)
+                self.custom_print("No WHOIS for %s - storing" % domain)
                 record = {'domain': domain, 'org': self.NO_WHOIS, 'creation_date': self.NO_CREATED,
                           'expiration_date': self.NO_EXPIRED}
-                self.record_insert(record)
-                self.custom_print("No WHOIS for %s - storing" % domain)
             else:
                 # Do not store WHOIS for blank domains
                 self.custom_print("No WHOIS for %s - not storing" % domain)
+        return json.dumps(record)
 
-        return record
+
+class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        if self.server.args.verbose: self.server.safe_print(self.path)
+        (ignore, ignore, urlpath, urlparams, ignore) = urlparse.urlsplit(self.path)
+        cmdstr = tgtstr = None
+        if re.search("[\/](?:domain)[\/].*?", urlpath):
+            cmdstr = re.search(r"[\/](domain)[\/].*$", urlpath)
+            tgtstr = re.search(r"[\/](domain)[\/](.*)$", urlpath)
+            if not cmdstr or not tgtstr:
+                self.wfile.write(
+                    '<html><body>API Documentation<br> http://%s:%s/cmd/tgt <br> cmd = domain, alexa or created <br> tgt = domain name </body></html>' % (
+                    self.server.server_address[0], self.server.server_address[1], self.server.server_address[0],
+                    self.server.server_address[1], self.server.server_address[0], self.server.server_address[1]))
+                return
+            params = {}
+            params["cmd"] = cmdstr.group(1)
+            params["tgt"] = tgtstr.group(2)
+            record = self.server.domain_lookup.retrieve_domain(params['tgt'])
+            self.wfile.write(record)
+        else:
+            cmdstr = re.search("cmd=(?:domain)", urlparams)
+            tgtstr = re.search("tgt=", urlparams)
+            if not cmdstr or not tgtstr:
+                self.wfile.write(
+                    '<html><body>API Documentation<br> http://%s:%s/cmd/tgt <br> cmd = domain, alexa or created <br> tgt = domain name </body></html>' % (
+                    self.server.server_address[0], self.server.server_address[1], self.server.server_address[0],
+                    self.server.server_address[1], self.server.server_address[0], self.server.server_address[1]))
+                return
+            params = {}
+            try:
+                for prm in urlparams.split("&"):
+                    key, value = prm.split("=")
+                    params[key] = value
+            except:
+                self.wfile.write('<html><body>Unable to parse the url. </body></html>')
+                return
+
+    def log_message(self, format, *args):
+        return
+
+
+class ThreadedDomainLookup(SocketServer.ThreadingMixIn, SocketServer.TCPServer, BaseHTTPServer.HTTPServer):
+    def __init__(self, *args, **kwargs):
+        self.cache = {}
+        self.cache_lock = threading.Lock()
+        self.args = ""
+        self.screen_lock = threading.Lock()
+        self.alexa = ""
+        self.exitthread = threading.Event()
+        self.exitthread.clear()
+        self.config = None
+        self.domain_lookup = None
+        if self.config:
+            self.domain_lookup = domainLookup(domain_stats_url=self.config.domain_stats_url,
+                                              db_path=self.config.db_path,
+                                              db=self.config.db,
+                                              verbose=self.config.verbose)
+            print("Connected to domain stats!")
+
+        BaseHTTPServer.HTTPServer.__init__(self, *args, **kwargs)
+
+    def safe_print(self, *args, **kwargs):
+        try:
+            self.screen_lock.acquire()
+            # print(*args, **kwargs)
+        finally:
+            self.screen_lock.release()
+
+
+def main():
+    config = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', required=False,
+                        help='Config with settings for datastore and domain_stats', default='config.ini')
+    parser.add_argument('-ip', '--address', required=False,
+                        help='IP Address for the server to listen on.  Default is 127.0.0.1', default='127.0.0.1')
+    parser.add_argument('-p', '--port', type=int, required=False, default=8001,
+                        help='You must provide a TCP Port to bind to')
+    parser.add_argument('-v', '--verbose', action='count', required=False,
+                        help='Print verbose output to the server screen.  -vv is more verbose.')
+    parser.add_argument('--store_results', action="store_true",
+                        help="Stores results to a local database. Provides a significant performance improvement.")
+    args = parser.parse_args()
+
+    if args.config:
+        config = configParser(config=args.config)
+        address = config.address
+        port = config.port
+
+    else:
+        address, port = args.address, args.port
+
+    server = ThreadedDomainLookup((address, port), domain_api)
+    server.config = config
+    server.domain_lookup = domainLookup(domain_stats_url=config.domain_stats_url,
+                                        db_path=config.db_path,
+                                        db=config.db,
+                                        verbose=config.verbose)
+    server.args = args
+
+    server.safe_print('Server is Ready. http://%s:%s/cmd/[subcmd/,]target' % (address, port))
+    while True:
+        try:
+
+            server.handle_request()
+
+        except KeyboardInterrupt:
+            break
+
+    server.safe_print("Web API Disabled...")
+    server.safe_print("Control-C hit: Exiting server.  Please wait..")
+
+
+if __name__ == "__main__":
+    main()
