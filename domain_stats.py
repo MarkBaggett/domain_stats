@@ -24,6 +24,7 @@ except Exception as e:
 class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
+        self.send_header('Content-type','text/plain')
         self.end_headers()
         if self.server.args.verbose: self.server.safe_print(self.path)
         (ignore, ignore, urlpath, urlparams, ignore) = urlparse.urlsplit(self.path)
