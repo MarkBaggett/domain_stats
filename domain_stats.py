@@ -3,16 +3,28 @@
 #Twitter @MarkBaggett
 
 from __future__ import print_function
-import BaseHTTPServer
+
+import six
+if six.PY2:
+    import BaseHTTPServer
+    import SocketServer
+    import urlparse
+else:
+    import http.server as BaseHTTPServer
+    import socketserver as SocketServer
+    import urllib.parse as urlparse
+
+#import BaseHTTPServer
 import threading
-import SocketServer
-import urlparse
+#import SocketServer
+#import urlparse
 import re
 import argparse
 import sys
 import time
 import os
 import datetime
+import pickle
 
 try:
     import whois
@@ -33,7 +45,8 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
             cmdstr = re.search(r"[\/](created|alexa|domain)[\/].*$", urlpath)
             tgtstr = re.search(r"[\/](created|alexa|domain)[\/](.*)$", urlpath)
             if not cmdstr or not tgtstr:
-                self.wfile.write('<html><body>API Documentation<br> http://%s:%s/cmd/tgt <br> cmd = domain, alexa or created <br> tgt = domain name </body></html>' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1]))
+                api_hlp = 'API Documentation\nhttp://%s:%s/cmd/tgt cmd = domain, alexa or created tgt = domain name' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1])
+                self.wfile.write(api_hlp.encode("latin-1"))
                 return
             params = {}
             params["cmd"] = cmdstr.group(1)
@@ -42,7 +55,8 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
             cmdstr=re.search("cmd=(?:domain|alexa|created)",urlparams)
             tgtstr =  re.search("tgt=",urlparams)
             if not cmdstr or not tgtstr:
-                self.wfile.write('<html><body>API Documentation<br> http://%s:%s/cmd/tgt <br> cmd = domain, alexa or created <br> tgt = domain name </body></html>' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1]))
+                api_hlp = 'API Documentation\nhttp://%s:%s/cmd/tgt cmd = domain, alexa or created tgt = domain name' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1])
+                self.wfile.write(api_hlp.encode("latin-1"))
                 return
             params={}
             try:
@@ -50,16 +64,16 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                     key,value = prm.split("=")
                     params[key]=value
             except:
-                self.wfile.write('<html><body>Unable to parse the url. </body></html>')
+                self.wfile.write('Unable to parse the url.'.encode('latin-1'))
                 return
         if params["cmd"] == "alexa":
             if self.server.args.verbose: self.server.safe_print ("Alexa Query:", params["tgt"])
             if not self.server.alexa:
                 if self.server.args.verbose: self.server.safe_print ("No Alexa data loaded. Restart program.")
-                self.wfile.write("Alexa not loaded on server. Restart server with -a or --alexa and file path.")
+                self.wfile.write("Alexa not loaded on server. Restart server with -a or --alexa and file path.".encode("latin-1"))
             else:
                 if self.server.args.verbose: self.server.safe_print ("Alexa queried for:%s" % (params['tgt']))              
-                self.wfile.write(str(self.server.alexa.get(params["tgt"],"0")))
+                self.wfile.write(str(self.server.alexa.get(params["tgt"],"0")).encode("latin-1"))
         elif params["cmd"] == "domain":
             fields=[]
             if "/" in params['tgt']:
@@ -69,7 +83,11 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
             if params['tgt'] in self.server.cache:
                 if self.server.args.verbose: self.server.safe_print("Found in cache!!")
                 domain_info = self.server.cache.get(params['tgt'])
-                #Update the time on the domain
+                #If whois told us it doesnt exist previously then return cached response.  Dont update time so this times out at cache interval.
+                if domain_info.get('status','NOT FOUND') == "NOT FOUND":
+                    self.wfile.write(str("No whois record for %s" % (params['tgt'])).encode("latin-1"))
+                    return 
+                #Update the time on the domain so frequently queried domains stay in cache.
                 domain_info["time"] = time.time()
                 try:
                     self.server.cache_lock.acquire()
@@ -82,11 +100,14 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                     if self.server.args.verbose: self.server.safe_print ("Querying the web", params['tgt'])
                     domain_info = whois.whois(params['tgt'])
                     if not domain_info.get('creation_date'):
-                        self.wfile.write(str("No whois record for %s" % (params['tgt'])))
+                        self.wfile.write(str("No whois record for %s" % (params['tgt'])).encode("latin-1"))
                         return
                 except Exception as e:
-                    if self.server.args.verbose: self.server.safe_print ("Error querying whois server: %s" % (str(e)))     
-                    return
+                    if "no match for" in str(e).lower():
+                        domain_info={'domain_name': params['tgt'], 'time': time.time(),'status':"NOT FOUND"}
+                    elif self.server.args.verbose:
+                        self.server.safe_print ("Error querying whois server: %s" % (str(e)))     
+                        return
                 #Put it in the cache
                 self.server.safe_print("Caching whois record %s" % (domain_info.get("domain_name","incomplete record")))
                 domain_info["time"] = time.time()
@@ -98,9 +119,12 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                 finally:
                     self.server.cache_lock.release()
             if not fields:
-                self.wfile.write(str(domain_info))
+                self.wfile.write(str(domain_info).encode("latin-1"))
             else:
                 if self.server.args.verbose: self.server.safe_print("processing fields %s" % (fields))
+                if domain_info.get('status','') == "NOT FOUND":
+                    self.wfile.write(str("No whois record for %s" % (params['tgt'])).encode("latin-1"))
+                    return
                 for fld in fields:
                     #We only pull one value if multiple values exist unless the field name ends with an * or --all was on cli
                     retrieve_all = self.server.args.all
@@ -109,14 +133,14 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                         retrieve_all = True
                     fld_value = domain_info.get(fld,"no field named %s found" % (fld))
                     if (not retrieve_all) and type(fld_value)==list:
-                        fld_value = fld_value[-1]
-                    self.wfile.write(str(fld_value)+"; ")              
+                        fld_value = fld_value[0]
+                    self.wfile.write(str(fld_value).encode("latin-1")+b"; ")              
         return
 
     def log_message(self, format, *args):
         return
 
-class ThreadedDomainStats(SocketServer.ThreadingMixIn, SocketServer.TCPServer, BaseHTTPServer.HTTPServer):
+class ThreadedDomainStats(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
     def __init__(self, *args,**kwargs):
         self.cache = {}
         self.cache_lock = threading.Lock()
@@ -150,11 +174,12 @@ class ThreadedDomainStats(SocketServer.ThreadingMixIn, SocketServer.TCPServer, B
             self.timer = threading.Timer(self.args.garbage_cycle, self.clear_old_cache, args = ())
             self.timer.start()
 
-def preload_domains(domain_list, server, delay):
+def preload_domains(domain_list, server, delay=0.1):
     server.safe_print("Now preloading %d domains from alexa in the whois cache." %(len(domain_list)))
     dcount = 0
-    dtenth = len(domain_list)/10
+    dtenth = len(domain_list)/10.0
     for eachalexa,eachdomain in re.findall(r"^(\d+),(\S+)", "".join(domain_list), re.MULTILINE):
+        time.sleep(delay)
         dcount += 1
         if (dcount % dtenth) == 0:
             server.safe_print("Loaded %d percent of whois cache." % (float(dcount)/len(domain_list)*100))
@@ -164,7 +189,7 @@ def preload_domains(domain_list, server, delay):
                 server.safe_print("No whois record for %s" % (eachdomain))
                 continue
         except Exception as e:
-            if args.verbose: server.safe_print("Error querying whois server: %s" % (str(e)))     
+            server.safe_print("Error querying whois server: %s" % (str(e)))     
             continue
         domain_info["time"] = time.time()
         domain_info['alexa'] = eachalexa
@@ -178,19 +203,33 @@ def preload_domains(domain_list, server, delay):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('-ip','--address',required=False,help='IP Address for the server to listen on.  Default is 127.0.0.1',default='127.0.0.1')
-    parser.add_argument('-c','--cache-time',type=float,required=False,help='Number of seconds to hold a whois record in the cache. Default is 3600 (1 hour). Set to 0 to save forever.',default=3600)
+    parser.add_argument('-c','--cache-time',type=float,required=False,help='Number of seconds to hold a whois record in the cache. Default is 604800 (7 days). Set to 0 to save forever.',default=604800)
+    parser.add_argument('-d','--disable-disk-preload',action="store_true",required=False,help='Rely completely on online whois.  Do not use offline (and possibly outdated) .dst file.')
     parser.add_argument('port',type=int,help='You must provide a TCP Port to bind to')
     parser.add_argument('-v','--verbose',action='count',required=False,help='Print verbose output to the server screen.  -vv is more verbose.')
     parser.add_argument('-a','--alexa',required=False,help='Provide a local file path to an Alexa top-1m.csv')
     parser.add_argument('--all',action="store_true",required=False,help='Return all of the values in a field if multiples exist. By default it only returns the last value.')
-    parser.add_argument('--preload',type=int,default=1000,help='preload cache with this number of the top Alexa domain entries. set to 0 to disable.  Default 1000')
+    parser.add_argument('--preload',type=int,default=100,help='preload cache with this number of the top Alexa domain entries. set to 0 to disable.  Default 100')
     parser.add_argument('--delay',type=float,default=0.1,help='Delay between whois lookups while staging the initial cache.  Default is 0.1')
-    parser.add_argument('--garbage-cycle',type=int,default=86400,help='Delete entries in cache older than --cache-time at this iterval (seconds).  Default is 86400')
+    parser.add_argument('--garbage-cycle',type=int,default=86400,help='Delete entries in cache older than --cache-time at this iterval (seconds).  Default is 86400 (once per day)')
 
     args = parser.parse_args()
 
     #Setup the server.
     server = ThreadedDomainStats((args.address, args.port), domain_api)
+
+    if not args.alexa and not args.disable_disk_preload:
+        server.safe_print('Preloading domains from disk cache.')
+        try:
+            fh = open("domain_cache.dst","rb")
+            if six.PY2:
+                server.cache = pickle.loads(fh.read())
+            else:
+                server.cache = pickle.loads(fh.read(),fix_imports=True)
+            fh.close()
+        except Exception as e:
+            raise(Exception("An error occured loading the disk cache {0}".format(str(e)))) 
+
     if args.alexa:
         if not os.path.exists(args.alexa):
             print("Alexa file not found %s" % (args.alexa))
