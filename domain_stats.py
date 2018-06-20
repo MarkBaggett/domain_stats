@@ -25,6 +25,7 @@ import time
 import os
 import datetime
 import pickle
+from pprint import pformat
 
 try:
     import whois
@@ -119,7 +120,8 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                 finally:
                     self.server.cache_lock.release()
             if not fields:
-                self.wfile.write(str(domain_info).encode("latin-1"))
+                dinfo = pformat(domain_info)
+                self.wfile.write(dinfo.encode("latin-1"))
             else:
                 if self.server.args.verbose: self.server.safe_print("processing fields %s" % (fields))
                 if domain_info.get('status','') == "NOT FOUND":

@@ -46,17 +46,16 @@ parser.add_argument('-c','--count',type=int, help='The number of domains to read
 parser.add_argument('-f','--file',help='Name of the file to write.',default="domain_cache.dst")
 parser.add_argument('-a','--append',action="store_true", required=False,help='Append to existing file instead of overwriting.')
 args = parser.parse_args()
-print args
 
 cache = {}
 try:
-    alexa = open("top-1m.csv").readlines()[900:args.count]
+    alexa = open("top-1m.csv").readlines()[:args.count]
 except Exception as e:
     raise(Exception("Cant find your alexa top-1m.csv file. {0}".format(str(e))))
 
 if args.append:
     try:
-        fh = open("domain_cache.dst") 
+        fh = open("domain_cache.dst","rb") 
         cache = pickle.load(fh)
         fh.close()
     except Exception as e:
@@ -65,8 +64,9 @@ if args.append:
 preload_domains(alexa)
 
 try:
-    fh = open(args.file,"w")
-    pickle.dump(cache, fh, protocol=2)
+    fh = open(args.file,"wb")
+    fh.write(pickle.dumps(cache,protocol=2))
+    fh.flush()
     fh.close()
 except Exception as e:
     raise(Exception("Unable to create your disk cache file. {0}".format(str(e))))
