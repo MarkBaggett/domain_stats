@@ -46,7 +46,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
             cmdstr = re.search(r"[\/](created|alexa|domain)[\/].*$", urlpath)
             tgtstr = re.search(r"[\/](created|alexa|domain)[\/](.*)$", urlpath)
             if not cmdstr or not tgtstr:
-                api_hlp = 'API Documentation\nhttp://%s:%s/cmd/tgt cmd = domain, alexa or created tgt = domain name' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1])
+                api_hlp = 'API Documentation\nhttp://%s:%s/cmd/tgt cmd = domain or alexa tgt = domain name' % (self.server.server_address[0], self.server.server_address[1])
                 self.wfile.write(api_hlp.encode("latin-1"))
                 return
             params = {}
@@ -56,7 +56,7 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
             cmdstr=re.search("cmd=(?:domain|alexa|created)",urlparams)
             tgtstr =  re.search("tgt=",urlparams)
             if not cmdstr or not tgtstr:
-                api_hlp = 'API Documentation\nhttp://%s:%s/cmd/tgt cmd = domain, alexa or created tgt = domain name' % (self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1],self.server.server_address[0], self.server.server_address[1])
+                api_hlp = 'API Documentation\nhttp://%s:%s/cmd/tgt cmd = domain or alexa tgt = domain name' % (self.server.server_address[0], self.server.server_address[1])
                 self.wfile.write(api_hlp.encode("latin-1"))
                 return
             params={}
