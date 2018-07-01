@@ -142,6 +142,11 @@ Here is an example of starting the server on port 8000 and only loading the top 
 student@SEC573:~$ python domain_stats.py --preload 100 -a ~/Downloads/top-1m.csv 8000 
 ```
 
+Note that a systemd startup file is provided, although you will likely need to adjust paths to the script and `top-1m.csv` file.  The provided sample assumes you've cloned this repository to `/usr/local/share/domain_stats/`.  Enable with something like the following, again substituting the appropraite paths:
+```bash
+$ sudo sytemctl enable /usr/local/share/domain_stats/systemd/domain_stats.service
+```
+
 ---
 
 CHANGE LOG:  Version 1.0 -> 1.1
