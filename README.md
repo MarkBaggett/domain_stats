@@ -147,7 +147,7 @@ student@SEC573:~$ python domain_stats.py --preload 100 -a ~/Downloads/top-1m.csv
 CHANGE LOG:  Version 1.0 -> 1.1
 
 * Update code to work in either Python2 or Python3
-* Changed Default Content type of server response to TEXT.
-* Added -d option which will load top 1000 domains from disk when -a top-1m.csv and --preload are not used.
-* Added caching of "Domain not found" responses from WHOIS (Feature Request from resweb10)
+* Changed Default Content type of server response to TEXT
+* Added `-d` option which will load top 1000 domains from disk when `-a top-1m.csv` and `--preload` are not used.
+* Added caching of "Domain not found" responses from WHOIS (Feature Request from @resweb10)
 * Added update_diskcache.py to create or update the local disk cache.
