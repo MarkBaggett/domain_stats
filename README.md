@@ -145,6 +145,7 @@ student@SEC573:~$ python domain_stats.py --preload 100 -a ~/Downloads/top-1m.csv
 Note that a systemd startup file is provided, although you will likely need to adjust paths to the script and `top-1m.csv` file.  The provided sample assumes you've cloned this repository to `/usr/local/share/domain_stats/`.  Enable with something like the following, again substituting the appropraite paths:
 ```bash
 $ sudo systemctl enable /usr/local/share/domain_stats/systemd/domain_stats.service
+$ sudo systemctl start domain_stats.service
 ```
 
 ---
