@@ -142,14 +142,18 @@ Here is an example of starting the server on port 8000 and only loading the top 
 student@SEC573:~$ python domain_stats.py --preload 100 -a ~/Downloads/top-1m.csv 8000 
 ```
 
+Note that a systemd startup file is provided, although you will likely need to adjust paths to the script and `top-1m.csv` file.  The provided sample assumes you've cloned this repository to `/usr/local/share/domain_stats/`.  Enable with something like the following, again substituting the appropraite paths:
+```bash
+$ sudo systemctl enable /usr/local/share/domain_stats/systemd/domain_stats.service
+$ sudo systemctl start domain_stats.service
+```
+
 ---
 
 CHANGE LOG:  Version 1.0 -> 1.1
 
-*Update code to work in either Python2 or Python3
-*Changed Default Content type of server response to TEXT.
-*Added -d option which will load top 1000 domains from disk when -a top-1m.csv and --preload are not used.
-*Added caching of "Domain not found" responses from WHOIS (Feature Request from resweb10)
-*Added update_diskcache.py to create or update the local disk cache.
-
-
+* Update code to work in either Python2 or Python3
+* Changed Default Content type of server response to TEXT
+* Added `-d` option which will load top 1000 domains from disk when `-a top-1m.csv` and `--preload` are not used.
+* Added caching of "Domain not found" responses from WHOIS (Feature Request from @resweb10)
+* Added update_diskcache.py to create or update the local disk cache.
