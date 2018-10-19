@@ -104,9 +104,10 @@ class domain_api(BaseHTTPServer.BaseHTTPRequestHandler):
                         self.wfile.write(str("No whois record for %s" % (params['tgt'])).encode("latin-1"))
                         return
                 except Exception as e:
+                    print(e)
                     if "no match for" in str(e).lower():
                         domain_info={'domain_name': params['tgt'], 'time': time.time(),'status':"NOT FOUND"}
-                    elif self.server.args.verbose:
+                    else:
                         self.server.safe_print ("Error querying whois server: %s" % (str(e)))     
                         return
                 #Put it in the cache
