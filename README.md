@@ -120,7 +120,7 @@ optional arguments:
   --all                 Return all of the values in a field if multiples
                         exist. By default it only returns the last value.
   --preload PRELOAD     preload cache with this number of the top Alexa domain
-                        entries. set to 0 to disable preloading. Default 1000
+                        entries. set to 0 to disable preloading. Default 100
   --delay DELAY         Delay between whois lookups while staging the initial
                         cache. Default is 0.1
   --garbage-cycle GARBAGE_CYCLE
