@@ -1,0 +1,2 @@
+# Allows whois over SOCKS5 proxy
+PySocks
