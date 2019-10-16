@@ -9,9 +9,28 @@ Some security enterprise management systems are capable of querying web APIs for
 
 ## Getting Started
 
+**Install requirements**
+
+A requirements file has been provided for python3
+```
+pip install -r requirements3.txt
+```
+
+If you require SOCKS proxy support also install optional-requirement3.txt
+```
+pip install -r optional-requirements3.txt
+```
+
 **Start domain_stats.py**
 
 ```
+python domain_stats.py -ip 127.0.0.1 8000
+```
+
+**If you require SOCKS proxy support**
+
+```
+export SOCKS=proxy.example.com:1080
 python domain_stats.py -ip 127.0.0.1 8000
 ```
 
