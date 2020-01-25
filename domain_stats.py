@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #domain_stats.py by Mark Baggett
 #Twitter @MarkBaggett
 

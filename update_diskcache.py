@@ -6,7 +6,6 @@ import pickle
 import argparse
 import six
 
-
 if six.PY2:
     raise(Exception("You should only use Python 3 to build the offline cache."))
 
