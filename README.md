@@ -1,159 +1,130 @@
-# domain_stats.py
-# Version 1.1 
-# Written by Mark Baggett @markbaggett
-# Under direction of Justin Henderson @securitymapper
-# Thanks to Justin Henderson for being the complete creative force behind the program.  He said what he wanted.  I wrote it. 
+# domain_stats2
 
-domain_stats.py is a web API to deliver domain information from whois and Alexa/Cisco Top 1 million ranking. 
-Some security enterprise management systems are capable of querying web APIs for additional information.  This API provides easy access to that information for those systems.
+ATTENTION:    THIS CODE BASE IS CURRENTLY BROKEN!!
 
-## Getting Started
+But I have some exciting news.  The SANS isc is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. 
 
-**Start domain_stats.py**
+
+This is a complete rewrite and new approach to managing baby domains in your organization.  Based on feedback from the community Domain_stats was really only used for baby domain information.  This new iteration focuses on that data and how to make it useful.  In this process it now tracks "FIRST CONTACT" so you know when your organization and/or the ISC has seen that domain before.
+
+The domain stats client is focused on quickly giving you 5 pieces of data for every domain name you ask it for.  That is when the domain was first seen by you, when it was first seen by the security community and when it was first seen by the web.
+
+SEEN_BY_YOU - Values: Date First Seen by you
+
+SEEN_BY_ISC  - Values: NA or Date First seen by ISC  (NA indicates that it was resolved by the local database no ISC is required.)
+
+SEEN_BY_WEB - Values: CreationDate
+
+CATEGORY    - NEW or ESTABLISHED  (indicating whether it is less than 2 years old since the SEEN_BY_WEB date)
+
+ALERT      -  List of alerts regarding this domain.   Including:
+              YOUR-FIRST-CONTACT  - This request is first time you have ever seen this domain on your network
+              ISC-FIRST-CONTACT  - This is the first time any domain_stats user has seen this domain on their network
+              <other>  - The ISC may add other alert for a domain 
+
+
+Here are some examples of how these are useful.
+If your SIEM sees a request for google.com that is not a new domain and has been established for may years. Your response may look like this:
 
 ```
-python domain_stats.py -ip 127.0.0.1 8000
+student@573:~/Documents/domain_stats2$ wget -q -O- http://127.0.0.1:8000/google.com
+{"seen_by_web": "1998-10-08 07:30:02", "seen_by_isc": "NA", "seen_by_you": "2019-12-24 15:30:02", "category": "ESTABLISHED", "alerts": ['YOUR-FIRST-CONTACT']}
 ```
+When the domain has been around for more than two years domain stats responds and tells you that is an "ESTABLISHED" domain.  Notice that ALERTS is set to "YOUR-FIRST-CONTACT". Since this is a brand new domain stats installation this is the first time my organization has ever queried google.  You will only see "YOUR-FIRST-CONTACT" once for each domain. Also "SEEN_BY_ISC" is set to NA indicating that this query was resolved locally by your domain client and it didn't need to talk to the ISC.  That means that this is a well known established domain that has been around for a long time and your local client has it in its database.  Generally speaking you can most likely ignore the NA SEEN_BY_ISC domains.
+ 
+Lets look at another domain.  Look at markbaggett.com.
 
-## Queries
-
-The API is simple.  Once the server is started you can query the Alexa/Cisco ranking of a domain:
-
-`http://<ip>:<port>/alexa/<domain>`
-
-#### Example
-
-```bash
-student@SEC573:~$ curl http://127.0.0.1:8000/alexa/sans.org
-25646
 ```
-
-This tells us that SANS.ORG is the 25646th most popular domain on the internet.  So it probably isn't a phishing site.  
-
-_**NOTE:** The alexa option is only available when the alexa/cisco database is provided as a command line option. You can download a copy of the data at http://s3.amazonaws.com/alexa-static/top-1m.csv.zip_
-
-**NOTE FURTHER**  Alexa has discontinued their support for the top 1 million.  Cisco Umbrella is now offering a free alternative.  It can be downloaded here https://s3-us-west-1.amazonaws.com/umbrella-static/index.html  The files are using the exact same format and should be used with this tool instead of the alexa data which will quickly become outdated.   Thanks to Justin Henderson for finding the link to the Cisco replacment!
-
-As not to break startup scripts, etc in existing deployments, we will keep the `-a` and `--alexa` command line arguments.
-
-
-You can also query whois domain information for a domain.   This query will return the entire whois record for sans.org:
-
-```bash
-student@SEC573:~$ curl http://127.0.0.1:8000/domain/sans.org
+student@573:~/Documents/domain_stats2$ wget -q -O- http://127.0.0.1:8000/markbaggett.com
+{"seen_by_web": "2015-12-12 19:34:59", "seen_by_isc": "2019-06-08 10:03:17", "seen_by_you":"2019-06-08 10:03:17", "category": "ESTABLISHED", "alerts": ['YOUR-FIRST-CONTACT'] 
 ```
+The domain markbaggett.com wasn't in the local database on my server so it had to go off and ask the SANS Internet Storm Center server for that information. It got back a "seen_by_web" date of 12-12-2015.  This is the domains registration date. The category indicates that this is an "ESTABLISHED" domain.  It will added to the client database for all future queries unless any additional alerts were set by the ISC. Domains that have an alert associated with them will be cached for 24 hours. Then another query will be sent to the ISC.  This process is repeated until the isc alert for that domain is cleared.  Notice there is a date for "seen_by_isc".  That is the first time ANYONE using domain_stats queried the central server for that domain. Someone using domain stats ask about that domain that back on July 8th. That is a few months ago so it isn't brand new to the community. If no one using domain stats had ever asked about that domain there would have been an additional alert that says "ISC-FIRST-CONTACT". Last we can see it is again the YOUR-FIRST-CONTACT alert for our organization.   
 
-Alternatively you can query individual entries in the whois record by including field names in the path.
+A domain with a very recent "seen_by_web", "seen_by_isc" and "seen_by_you" date should be investigated. The vast majority of domains have been around for a few years before they are stable and gain popularity.  Domains used by attackers are usually established shortly before they are used. 
 
-```bash
-student@SEC573:~$ curl http://127.0.0.1:8000/domain/creation_date/sans.org
-1995-08-04 04:00:00;
+Anytime you see a "???-FIRST-CONTACT" on a domain that has been running for some period of time it is at the least a good thing to be aware of.  If it is the FIRST CONTACT for both you and the community then that is even more interesting. (Unless of course you are of the few beta testers where the community is very small and not much different that seen_by_you.)
+
+
+![Overview](overview.jpg)
+
+
+The goal is to push as much of the "ESTABLISHED" data to the client local lan as possible. This minimizes network traffic keeps as much data as possible on the client network. When contacting the central server it will periodically inform the client to pull list of new domains and add them to the client established database.
+
+More data to come later as features and functions are more firmly established.
+
+You can check the efficiency of your domain_stats server cache with the following request.
+
+$ wget -q -O- http://127.0.0.1:8000/stats
+Will show statistics on the efficiency of the memory cache and the database hit rate.
+
+$ wget -q -O- http://127.0.0.1:8000/showcache
+Will dump the cache
+
+
+
+# ISC API Specification
+API requests look like this
 ```
-
-Queryable Fields
-------
-
-| WHOIS        | Location           | Misc  |
-| ------------- |:-------------:| -----:|
-| name  | zipcode    | dnssec |
-| domain_name     | city       |   referral_url |
-| expiration_date | state      |    alexa |
-| creation_date | address     |    status |
-| updated_date | country      |     |
-| registrar |        |     |
-| whois_server|        |     |
-| emails |        |     |
-| name_servers| 
-
-
-You can query more than one field by simply listing the additional fields in the path.  The domain is always the last entry in the path.
-
-```bash
-student@SEC573:~$ curl http://127.0.0.1:8000/domain/creation_date/state/zipcode/city/sans.org
-1995-08-04 04:00:00; MD; 20814; Bethesda;
+{"command":  <command string>,  additional arguments depending upon command}
 ```
+Valid COMMANDS include "CONFIG", "STATUS", and "QUERY"
 
-Some fields such as *name_servers* or *updated_date* may contain multiple values.  By default the server will only return one of those values (the last one in the list).   _If you would like all of the values you can place an asterisk after the field name._  
 
-Consider these two examples:
 
-### Example 1
-
-```bash
-student@SEC573:~$ curl http://127.0.0.1:8000/domain/name_servers/google.com
-ns4.google.com;
+### **CONFIG command requests configuration options the ISC would like to enforce on the client**
+request:
 ```
-### Example 2
-
-```bash
-student@SEC573:~$ curl http://127.0.0.1:8000/domain/name_servers*/google.com
-[u'NS1.GOOGLE.COM', u'NS2.GOOGLE.COM', u'NS3.GOOGLE.COM', u'NS4.GOOGLE.COM', u'ns3.google.com', u'ns1.google.com', u'ns2.google.com', u'ns4.google.com']; 
+{"command": "config"}
 ```
-
-The first query returns a single name server where the second returns all the name servers.  This works the same for all the fields with multiple values.  If the __--all__ command line option is specified when the server is started it will always return all the fields.   Now lets look at the command line options for the server.
-
-
-## Arguments
-
-```bash
-student@SEC573:~$ python domain_stats.py --help
-usage: domain_stats.py [-h] [-ip ADDRESS] [-c CACHE_TIME] [-v] [-a ALEXA]
-                       [--all] [--preload PRELOAD] [--delay DELAY]
-                       [--garbage-cycle GARBAGE_CYCLE]
-                       port
-
-positional arguments:
-  port                  You must provide a TCP Port to bind to
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -ip ADDRESS, --address ADDRESS
-                        IP Address for the server to listen on. Default is
-                        127.0.0.1 
-  -c CACHE_TIME, --cache-time CACHE_TIME
-                        Number of seconds to hold a whois record in the cache.
-                        Default is 3600 (1 hour). Set to 0 to save forever.
-  -v, --verbose         Print verbose output to the server screen. -vv is more
-                        verbose.
-  -a ALEXA, --alexa ALEXA
-                        Provide a local file path to an Alexa top-1m.csv
-  --all                 Return all of the values in a field if multiples
-                        exist. By default it only returns the last value.
-  --preload PRELOAD     preload cache with this number of the top Alexa domain
-                        entries. set to 0 to disable preloading. Default 1000
-  --delay DELAY         Delay between whois lookups while staging the initial
-                        cache. Default is 0.1
-  --garbage-cycle GARBAGE_CYCLE
-                        Delete entries in cache older than --cache-time at
-                        this iterval (seconds). Default is 86400
+response:
 ```
-
-_Most of these arguments are optional._  The only thing you **MUST** specify is which port you want it to listen on.   The other options you probably want to use are --alexa (or -a), --delay and --preload.
-
-__--alexa__ is followed by the path to the alexa top 1 million csv file discussed earlier. --preload is followed by an integer that says how many of those alexa domains you want to automatically do whois lookups for to store in the cache on the server.  As stated above, you should use the Cisco Umbrella files now that Alexa has been discontinued. : https://s3-us-west-1.amazonaws.com/umbrella-static/index.html  
-
-__--delay__ can be used to cause control the delay between whois queries when preloading the servers cache.  Most of the other options control that cache.  By default when an domain is queried from a whois server it is cached for 1 hour.  You can change this with --cache-time.
-
-__--cache-time__ is followed by the number of seconds to store an entry in the cache. 86400 seconds is one day.   Setting the --cache-time to 0 will keep entries in memory forever (or until all memory is consumed and the server crashes)  The __--garbage-cycle__ option specifies how long to delay between cycles of cleaning up the cached entries older than --cache-time. 
-
-Here is an example of starting the server on port 8000 and only loading the top 100 most common alexa entries
-
-```bash
-student@SEC573:~$ python domain_stats.py --preload 100 -a ~/Downloads/top-1m.csv 8000 
+{"min_software_version": "major.minor string",  "min_database_version", "major.minor string", prohitited_tlds:["string1","string2"]}
 ```
+- clients will not query ISC for Domains listed in prohibited_tlds.   Examples may be ['.local', '.arpa']
+- If min_software_version is higher than the client software version it causes the software to abort
+- if min_database_version is higher than database version it forces the client to download new domains from github.com/markbaggett and add it to its local database
 
-Note that a systemd startup file is provided, although you will likely need to adjust paths to the script and `top-1m.csv` file.  The provided sample assumes you've cloned this repository to `/usr/local/share/domain_stats/`.  Enable with something like the following, again substituting the appropraite paths:
-```bash
-$ sudo systemctl enable /usr/local/share/domain_stats/systemd/domain_stats.service
-$ sudo systemctl start domain_stats.service
+
+
+### **STATUS command allows the clients to tell the ISC how they are doing and see if they can continue.  This can be used to tune client efficiency and reduce ISC requests.**
+Request:
 ```
+{"command":"status", "client_version":client_version, "database_version":database_version, "cache_efficiency":[cache.hits, cache.miss, cache.expire], "database_efficiency":[database_stats.hits, database_stats.miss]}
+```
+Response:
+```
+{"interval": "integer number of minutes ISC wishes to wait until next status update", "deny_client": "client message string"}
+```
+- interval: The interval tells the client how many minutes to wait before sending another status updates
+- deny_client: If set aborts the client with the specified message
 
----
 
-CHANGE LOG:  Version 1.0 -> 1.1
 
-* Update code to work in either Python2 or Python3
-* Changed Default Content type of server response to TEXT
-* Added `-d` option which will load top 1000 domains from disk when `-a top-1m.csv` and `--preload` are not used.
-* Added caching of "Domain not found" responses from WHOIS (Feature Request from @resweb10)
-* Added update_diskcache.py to create or update the local disk cache.
+### **QUERY command allows clients to query a domain record.**
+Requests:
+```
+{"command": "query", "domain": "example.tld"}
+```
+RESPONSES (two possible):
+##### A success response looks like this:
+
+```
+{"seen_by_web": '%Y-%m-%d %H:%M:%S', "expires": '%Y-%m-%d %H:%M:%S', "seen_by_isc":'%Y-%m-%d %H:%M:%S', "alerts":['list','of','alerts]}
+```
+   - seen_by_web is the domains creation date from the whois record. The time stamp must be in '%Y-%m-%d %H:%M:%S' format
+   - expires is the date that the domains registration expires from the whois record. The timestamp must be in '%Y-%m-%d %H:%M:%S' format
+   - seen_by_isc is the date that the first domain_stats client requested this domain from the isc. If this was the first request it will have the current date and time and 'ISC-FIRST-CONTACT' will be added to the alerts. The timestamp must be in '%Y-%m-%d %H:%M:%S' format.
+   - Alerts must include "ISC-FIRST-CONTACT" if this is the first time anyone has ever queried ISC for this domain
+   - Setting any additional alerts limits will cause the client record to not be commited to the database. Instead it is cached for 24 hours on the client.  After 24 hours the client will query the isc again.
+##### An error response looks like this:
+
+```
+{"seen_by_web":"ERROR", "expires":"ERROR", "seen_by_isc":<integer specifying cache time to live>, "alerts":['alerts','for','that','domain']}
+```
+   - seen_by_web and expires must be set to "ERROR" when an error has occured.
+   - Error time to live tell the client how long to cache and reuse the error for that domain.
+   - Integer > 0 - will cache the error for that many hours
+   - 0 - will not cache the error at all
+   - -1 - will cache it such that it does not expire, but the domain can still drop out of cache based on LRU algorithm
+   - -2 - PERMANENT cache entry.  Will never expire.  DANGEROUS. Use with caution.
+    
