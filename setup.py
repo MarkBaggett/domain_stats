@@ -11,14 +11,11 @@ setuptools.setup(
     description="Malicious Domain Detection base on domain creation and first contact",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    entry_points={
-        'console_scripts': [
-            'domain_stats = domain_stats.py',
-            'domain_stats_db_admin = domain_stats_db_admin.py'
-        ],
-    },
+    scripts = ['domain_stats/domain_stats', "domain_stats/domain_stats_db_admin"],
     url="https://github.com/markbaggett/domain_stats",
     packages=setuptools.find_packages(),
+    install_requires = ['requests','pyyaml', 'rdap', 'python-dateutil'],
+    include_package_data = True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
