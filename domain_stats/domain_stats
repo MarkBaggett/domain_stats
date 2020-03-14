@@ -21,11 +21,6 @@
 import logging
 import http.server
 import socketserver 
-import include.expiring_cache as expiring_cache
-import include.database_io as database_io
-import include.network_io as network_io
-import include.config as config
-import include.rdap_query as rdap
 import collections
 import sys
 import datetime
@@ -39,6 +34,18 @@ import functools
 import resource
 import pathlib
 import code
+import shutil
+import os
+
+
+#import domain_stats.expiring_cache as expiring_cache
+
+from domain_stats.expiring_cache import ExpiringCache
+from domain_stats.database_io import DomainStatsDatabase
+from domain_stats.network_io import IscConnection
+from domain_stats.config import Config
+from domain_stats.rdap_query import get_domain_record
+
 
 
 def dateconverter(o):
@@ -64,6 +71,12 @@ def health_check():
         return health_thread
     else:
         return None
+
+def setup_folder(destination_path):
+    source_path = pathlib.Path(__file__).parent
+    shutil.copy2(source_path/"domain_stats.yaml", destination_path)
+    os.system(f'cd {destination_path}; domain_stats_db_admin --create --update domain_stats.db')
+
 
 def reduce_domain(domain_in):
     parts =  domain_in.strip().split(".")
@@ -123,7 +136,7 @@ def domain_stats(domain):
         elif config.get("mode")=="rdap":
             alerts = ["YOUR-FIRST-CONTACT"]
             rdap_seen_by_you = (datetime.datetime.utcnow()+datetime.timedelta(hours=config['timezone_offset']))
-            rdap_seen_by_web, rdap_expires, rdap_error = rdap.get_domain_record(domain)
+            rdap_seen_by_web, rdap_expires, rdap_error = get_domain_record(domain)
             if rdap_seen_by_web == "ERROR":
                 cache_expiration = 1
                 if rdap_error:
@@ -223,23 +236,40 @@ class ThreadedDomainStats(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 if __name__ == "__main__":
     #Initialize the global variables
-    config = config.config("domain_stats.yaml")
-    if not pathlib.Path(config['database_file']).exists():
-        print(f"Database specified in domain_stats.yaml not found. Try creating it by running:\n$python database_admin --create --update {config['database_file']}")
+    if len(sys.argv) != 2:
+        print("domain_stats requires one argument. You must pass the path to a folder for data storage and processing.")
         sys.exit(1)
-    cache = expiring_cache.ExpiringCache()
+    working_path = pathlib.Path(sys.argv[1])
+    if not working_path.exists() and working_path.is_dir():
+        print("The argument specified is not a valid current directory.")
+        sys.exit(1)
+    if not (working_path / "domain_stats.yaml").exists():
+        print("No configuration file found.")
+        if input("Would you like to copy the required files to this folder?"):
+            setup_folder(sys.argv[1])
+        else:
+            print("Pass a path to a folder containing domain_stats.yaml")
+            sys.exit(1)
+    yaml_path = str(working_path / "domain_stats.yaml")
+    print(f"Using config {str(yaml_path)}")
+    config = Config(str(yaml_path))
+    data_path = working_path / config['database_file']
+    cache_file = working_path /  config['memory_cache'] 
+    if not data_path.exists():
+        print(f"Database specified in domain_stats.yaml not found. Try creating it by running:\n$python domain_stats_db_admin --create --update {config['database_file']}")
+        sys.exit(1)
+    cache = ExpiringCache()
     #Reload memory cache
-    cache_file = pathlib.Path(config['memory_cache'])
     if cache_file.exists():
         print(f"Cache Found!!. Reloading memory cache from previous run.")
         print(f"If you do not wish to use the previous data then delete the cache by executing \"rm {config.get('memory_cache')}\" ")
         cache.cache_load(str(cache_file))    
-    database = database_io.DomainStatsDatabase(config['database_file'])
-    isc_connection = network_io.IscConnection()
+    database = DomainStatsDatabase(str(data_path))
+    isc_connection = IscConnection()
     software_version = 1.0
 
     log = logging.getLogger("domain_stats")
-    logfile = logging.FileHandler('domain_stats.log')
+    logfile = logging.FileHandler(str(working_path / 'domain_stats.log'))
     logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(message)s')
     logfile.setFormatter(logformat)
     if config['log_detail'] == 0:
