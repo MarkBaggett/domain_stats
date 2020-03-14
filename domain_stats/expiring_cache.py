@@ -5,6 +5,7 @@ import sys
 import pickle
 import threading
 import logging 
+import traceback
 
 log = logging.getLogger("domain_stats")
 
@@ -36,7 +37,12 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
         super().__init__()
 
     def __contains__(self,*args,**kwargs):
-        log.info("Warning: __contains__ called with 'in' keyword.  This will likely skew your cache.stats.miss accuracy.  Instead just get() check for none being returned.")
+        try:
+            if  sys._getframe().f_back.f_back.f_code != "get":
+                print(f"Warning: __contains__ called with 'in' keyword.  This will likely skew your cache.stats.miss accuracy.  Instead just get() check for none being returned.")
+                print( sys._getframe().f_back.f_code)
+        except:
+            pass
         return super().__contains__(*args,**kwargs)
 
     def cache_info(self):

@@ -4,6 +4,7 @@ import datetime
 import logging
 import pathlib
 import urllib
+import os
 
 log = logging.getLogger("domain_stats")
 
@@ -163,6 +164,9 @@ class DomainStatsDatabase(object):
         new_records_count = 0
         latest_major, latest_minor = map(int, str(latest_version).split("."))
         current_major, current_minor = map(int, str(self.version).split("."))
+        dst_folder = pathlib.Path(self.filename).parent / "data" / f"{current_major}"
+        if not dst_folder.exists():
+            os.makedirs(dst_folder)
         log.info(f"Updating from {self.version} to {latest_version}")
         if latest_major > current_major:
             log.info("WARNING: Domain Stats database is a major revision behind. Database required rebuild.")

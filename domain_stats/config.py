@@ -1,7 +1,7 @@
 from collections import UserDict
 import yaml
 
-class config(UserDict):
+class Config(UserDict):
 
     def __init__(self, filename=""):
         super().__init__()
