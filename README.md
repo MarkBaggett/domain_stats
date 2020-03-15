@@ -7,14 +7,16 @@ But I have some exciting news.  The SANS isc is providing some funding and will 
 TO INSTALL:
 
 Install it as a Python package.  At a bash prompt run the following:
-
+```
 $ apt-get install python-pip
 $ pip install pyyaml, rdap, domain_stats
-
+```
 Then make a directory that will be used to for storage of data and configuration files and run domain_stats.  Pass it the path to the directory you created.
+```
 $ mkdir data
 $ cd data
 $ domain_stats .
+```
 
 domain_stats should setup the directory and start listening.
 
