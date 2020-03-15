@@ -1,8 +1,22 @@
 # domain_stats2
 
-ATTENTION:    THIS CODE BASE IS CURRENTLY BROKEN!!
+ATTENTION:    THIS CODE BASE IS CURRENTLY IN BETA
 
 But I have some exciting news.  The SANS isc is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. 
+
+TO INSTALL:
+
+Install it as a Python package.  At a bash prompt run the following:
+
+$ apt-get install python-pip
+$ pip install pyyaml, rdap, domain_stats
+
+Then make a directory that will be used to for storage of data and configuration files and run domain_stats.  Pass it the path to the directory you created.
+$ mkdir data
+$ cd data
+$ domain_stats .
+
+domain_stats should setup the directory and start listening.
 
 
 This is a complete rewrite and new approach to managing baby domains in your organization.  Based on feedback from the community Domain_stats was really only used for baby domain information.  This new iteration focuses on that data and how to make it useful.  In this process it now tracks "FIRST CONTACT" so you know when your organization and/or the ISC has seen that domain before.

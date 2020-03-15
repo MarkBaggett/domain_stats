@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: domain-stats
-Version: 0.0.1
+Version: 0.0.6
 Summary: Malicious Domain Detection base on domain creation and first contact
 Home-page: https://github.com/markbaggett/domain_stats
 Author: MarkBaggett

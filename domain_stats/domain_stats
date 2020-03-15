@@ -36,7 +36,7 @@ import pathlib
 import code
 import shutil
 import os
-
+import imp
 
 #import domain_stats.expiring_cache as expiring_cache
 
@@ -73,7 +73,7 @@ def health_check():
         return None
 
 def setup_folder(destination_path):
-    source_path = pathlib.Path(__file__).parent
+    source_path = pathlib.Path(imp.find_module("domain_stats")[1]) 
     shutil.copy2(source_path/"domain_stats.yaml", destination_path)
     os.system(f'cd {destination_path}; domain_stats_db_admin --create --update domain_stats.db')
 
