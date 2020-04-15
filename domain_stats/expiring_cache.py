@@ -36,14 +36,11 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
         self.update_lock = threading.Lock()
         super().__init__()
 
-    def __contains__(self,*args,**kwargs):
-        try:
-            if  sys._getframe().f_back.f_back.f_code != "get":
-                print(f"Warning: __contains__ called with 'in' keyword.  This will likely skew your cache.stats.miss accuracy.  Instead just get() check for none being returned.")
-                print( sys._getframe().f_back.f_code)
-        except:
-            pass
-        return super().__contains__(*args,**kwargs)
+    # def __contains__(self,*args,**kwargs):
+    #     "Use this to debug if cache.stats.miss is off.  Otherwise comment out for performance reasons"
+    #     log.debug(f"Warning: __contains__ called with 'in' keyword.  This will likely skew your cache.stats.miss accuracy.  Instead just get() check for none being returned.")
+    #     log.debug( sys._getframe().f_back.f_code)
+    #     return super().__contains__(*args,**kwargs)
 
     def cache_info(self):
         """JSON transmitable Report cache performance statistics"""
@@ -104,7 +101,7 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
                 try:
                     tgt_key= next(entries)
                 except StopIteration:
-                    print("Unable to delete any keys but the maximum size is exceeded.  Ignoring Maxsize.")
+                    log.debug("Unable to delete any keys but the maximum size is exceeded.  Ignoring Maxsize.")
                     break
                 else:
                     expires,_,_ = super().get(tgt_key)
