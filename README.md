@@ -21,6 +21,9 @@ $ domain_stats .
 domain_stats should setup the directory and start listening.
 
 
+![alt text](./domain_stats.gif "Installation and use")
+
+
 This is a complete rewrite and new approach to managing baby domains in your organization.  Based on feedback from the community Domain_stats was really only used for baby domain information.  This new iteration focuses on that data and how to make it useful.  In this process it now tracks "FIRST CONTACT" so you know when your organization and/or the ISC has seen that domain before.
 
 The domain stats client is focused on quickly giving you 5 pieces of data for every domain name you ask it for.  That is when the domain was first seen by you, when it was first seen by the security community and when it was first seen by the web.
