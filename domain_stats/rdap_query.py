@@ -24,6 +24,9 @@ def get_domain_record(domain):
     reg = dateutil.parser.isoparse(reg)
     reg.replace(tzinfo=datetime.timezone.utc)
     exp = retrieve_data( 'expiration', resp.get('events'))
-    exp = dateutil.parser.isoparse(exp)
+    try:
+        exp = dateutil.parser.isoparse(exp)
+    except Exception as e:
+        return "ERROR","ERROR", f"Invalid RDAP response Domain: {domain} generated {str(e)}"
     exp.replace(tzinfo=datetime.timezone.utc)
     return reg,exp,""
