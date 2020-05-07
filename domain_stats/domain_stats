@@ -80,7 +80,7 @@ def bash_cmd(cmdline,input=b""):
 
 
 def setup_folder(destination_path):
-    source_path = pathlib.Path(importlib.find_loader("domain_stats").path).parent
+    source_path = pathlib.Path(importlib.util.find_spec("domain_stats").origin).parent
     yaml_path = source_path / "domain_stats.yaml"
     if not yaml_path.is_file():
         print(f"Unable to find the domain_stats.yaml file in {source_path}")
@@ -91,6 +91,7 @@ def setup_folder(destination_path):
         sys.exit(1)
     else:
         os.system(f'cd {destination_path}; domain_stats_db_admin --create --update domain_stats.db')
+    print("Folder Initialization Complete.")
 
 
 def reduce_domain(domain_in):
