@@ -70,7 +70,7 @@ class DomainStatsDatabase(object):
         record_seen_by_web = record_seen_by_web.strftime('%Y-%m-%d %H:%M:%S')
         record_expires = record_expires.strftime('%Y-%m-%d %H:%M:%S')
         #If it was an RDAP record "seen by you" will contain the RDAP date so just make it a local database record.
-        if record_seed_by_isc = "RDAP":
+        if record_seed_by_isc == "RDAP":
             record_seen_by_isc = "LOCAL"
         if record_seen_by_isc != "LOCAL":
             record_seen_by_isc = record_seen_by_isc.strftime('%Y-%m-%d %H:%M:%S')

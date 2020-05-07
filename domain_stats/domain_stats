@@ -36,7 +36,8 @@ import pathlib
 import code
 import shutil
 import os
-import imp
+import importlib
+import subprocess
 
 #import domain_stats.expiring_cache as expiring_cache
 
@@ -72,10 +73,24 @@ def health_check():
     else:
         return None
 
+def bash_cmd(cmdline,input=b""):
+    ph = subprocess.Popen(cmdline,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.PIPE, executable="/bin/bash")
+    out,err = ph.communicate(input)
+    return out,err
+
+
 def setup_folder(destination_path):
-    source_path = pathlib.Path(imp.find_module("domain_stats")[1]) 
-    shutil.copy2(source_path/"domain_stats.yaml", destination_path)
-    os.system(f'cd {destination_path}; domain_stats_db_admin --create --update domain_stats.db')
+    source_path = pathlib.Path(importlib.find_loader("domain_stats").path).parent
+    yaml_path = source_path / "domain_stats.yaml"
+    if not yaml_path.is_file():
+        print(f"Unable to find the domain_stats.yaml file in {source_path}")
+        sys.exit(1)
+    shutil.copy2(yaml_path, destination_path)
+    if not bash_cmd("which domain_stats_db_admin")[0]:
+        print(f'domain_stats_db_admin was not found. Add it to your OS path and run "domain_stats_db_admin --create --update domain_stats.db"')
+        sys.exit(1)
+    else:
+        os.system(f'cd {destination_path}; domain_stats_db_admin --create --update domain_stats.db')
 
 
 def reduce_domain(domain_in):
