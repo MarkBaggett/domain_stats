@@ -109,7 +109,7 @@ class DomainStatsDatabase(object):
             web,expires,isc,you = record
         else:
             self.stats.miss += 1
-            log.info("No record in the database.  Returning None.")
+            log.info(f"No record in the database for {domain}  Returning None.")
             return (None,None,None,None)
         web = datetime.datetime.strptime(web, '%Y-%m-%d %H:%M:%S')
         expires = datetime.datetime.strptime(expires, '%Y-%m-%d %H:%M:%S')
