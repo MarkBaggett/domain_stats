@@ -330,7 +330,7 @@ if __name__ == "__main__":
     if health_thread:
         health_thread.cancel()
     print("Commiting Cache to disk...")
-    cache.cache_dump(config['memory_cache'])
+    cache.cache_dump( working_path /  config['memory_cache'] )
 
     print("Bye!")
 
