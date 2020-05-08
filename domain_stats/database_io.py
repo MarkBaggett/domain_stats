@@ -155,7 +155,10 @@ class DomainStatsDatabase(object):
                     self.update_record(domain, web, expires,"LOCAL", "FIRST-CONTACT")
                     log.debug(f"Record added to database for domain {domain}")
                 else:
-                    log.debug(f"Record already exists skipped {domain}")
+                    with self.lock:
+                        cursor.execute("update domains set expires=? where domain =?", (expires, domain))
+                        db.commit()
+                        log.debug(f"Record for {domain} already exists. Expiration was {record[1]} is now {expires}.")
             elif command == "-":
                 self.delete_record(domain)
                 log.debug(f"Deleted record for {domain}")
