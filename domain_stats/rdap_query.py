@@ -6,6 +6,7 @@ import datetime
 import dateutil.parser
 import dateutil.tz
 
+log = logging.getLogger("domain_stats")
 
 def get_config(update_url):
     try:

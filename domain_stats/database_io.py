@@ -1,7 +1,7 @@
+import logging
 import sqlite3
 import threading
 import datetime
-import logging
 import pathlib
 import urllib
 import os

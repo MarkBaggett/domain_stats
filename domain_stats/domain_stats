@@ -40,6 +40,7 @@ import importlib
 import subprocess
 
 #import domain_stats.expiring_cache as expiring_cache
+log = logging.getLogger("domain_stats")
 
 from domain_stats.expiring_cache import ExpiringCache
 from domain_stats.database_io import DomainStatsDatabase
@@ -270,7 +271,10 @@ if __name__ == "__main__":
     print(f"Using config {str(yaml_path)}")
     config = Config(str(yaml_path))
     data_path = working_path / config['database_file']
-    cache_file = working_path /  config['memory_cache'] 
+    cache_file = working_path / config['memory_cache'] 
+    print(f"Using database {str(data_path)}")
+    print(f"Using cache {str(cache_file)}")
+    
     if not data_path.exists():
         print(f"Database specified in domain_stats.yaml not found. Try creating it by running:\n$python domain_stats_db_admin --create --update {config['database_file']}")
         sys.exit(1)

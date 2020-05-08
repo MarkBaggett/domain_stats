@@ -1,8 +1,8 @@
+import logging
 import requests
 import json
 import random
 import datetime
-import logging
 
 
 log = logging.getLogger("domain_stats")

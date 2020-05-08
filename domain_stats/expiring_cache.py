@@ -1,10 +1,10 @@
+import logging 
 import collections
 import datetime
 import resource
 import sys
 import pickle
 import threading
-import logging 
 import traceback
 
 log = logging.getLogger("domain_stats")
