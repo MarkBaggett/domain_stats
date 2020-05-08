@@ -15,11 +15,15 @@ if __name__ == "__main__":
     parser.add_argument('-c','--create',action="store_true",required=False,help='Create the specified database. (Erases and overwrites existing files.)')
     parser.add_argument('-u','--update',action="store_true", required=False,help='Update the database established domains.')
     parser.add_argument('-v','--version',action="store_true", required=False,help='Check database version')
+    parser.add_argument('-d','--directory', default=".", required=False,help='Directory containing domain_stats.yaml config file.') 
     parser.add_argument('filename', help = "The name or path/name to the sqlite database to perform operations on.")
- 
     args = parser.parse_args()
 
-    config = config.Config("domain_stats.yaml")
+    if not pathlib.Path(args.directory + "/domain_stats.yaml").is_file():
+        print("I could not find domain_stats.yaml.  Try setting the -d argument.")
+        sys.exit(1)
+
+    config = config.Config(args.directory + "/domain_stats.yaml")
     database = database_io.DomainStatsDatabase(args.filename)
     isc_connection = network_io.IscConnection()
     mode = config.get("mode")
