@@ -6,6 +6,7 @@ import domain_stats.expiring_cache as expiring_cache
 import domain_stats.database_io as database_io
 import domain_stats.network_io as network_io
 import domain_stats.config as config
+import domain_stats.rdap_query as rdap_query
 
 
 if __name__ == "__main__":
@@ -21,6 +22,7 @@ if __name__ == "__main__":
     config = config.Config("domain_stats.yaml")
     database = database_io.DomainStatsDatabase(args.filename)
     isc_connection = network_io.IscConnection()
+    mode = config.get("mode")
 
     if args.filename != config.get("database_file"):
         print(f"domain_stats.yaml uses database file :{config.get('database_file')}")
@@ -41,7 +43,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if args.update:
-        min_client, min_data = isc_connection.get_config()
+        if mode == "isc":
+            min_client, min_data = isc_connection.get_config()
+        elif mode == "rdap":
+            min_client, min_data = rdap_query.get_config( config['target_updates'])
         if database.version < min_data:
             print(f"Database is out of date.  Forcing update from {database.version} to {min_data}")
             database.update_database(min_data, config['target_updates'])
@@ -50,7 +55,10 @@ if __name__ == "__main__":
         database.reset_first_contact()
 
     if args.version:
-        min_client, min_data = isc_connection.get_config()
+        if mode == "isc":
+            min_client, min_data = isc_connection.get_config()
+        elif mode == "rdap":
+            min_client, min_data = rdap_query.get_config(config['target_updates'])
         server_version = database.version
         print(f"Local Version:{database.version}  Server Version:{min_data}")
 

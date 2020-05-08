@@ -315,7 +315,10 @@ if __name__ == "__main__":
     server_thread.daemon = True
 
     #Schedule first health_check.  It reschedules itself as needed.
-    health_thread = health_check()
+    if config.get("mode") == "isc":
+        health_thread = health_check()
+    else:
+        health_thread = None
 
     try:
         server_thread.start()
