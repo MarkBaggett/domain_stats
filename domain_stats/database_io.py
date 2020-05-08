@@ -178,9 +178,14 @@ class DomainStatsDatabase(object):
         for update in target_updates:
             version = f"{current_major}.{update}"
             log.info(f"Now applying update {version}")
-            tgt_url = f"{update_url}/{current_major}/{update}.txt" 
+            tgt_url = f"{update_url}/{current_major}/{update}.txt"
             dst_path = pathlib.Path().cwd() / "data" / f"{current_major}" / f"{update}.txt"
-            urllib.request.urlretrieve(tgt_url, str(dst_path))
+            try:           
+                urllib.request.urlretrieve(tgt_url, str(dst_path))
+            except:
+                print(f"ERROR: Unable to access database updates. {tgt_url}")
+                log.critical(f"Unable to access database updates. {tgt_url}")
+                return self.version, 0
             new_records_count += self.process_update_file(str(dst_path))
         self.version = latest_version
         self.lastupdate = datetime.datetime.utcnow()
