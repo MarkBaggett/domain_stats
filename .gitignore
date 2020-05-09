@@ -1,3 +1,4 @@
 build/*
 domain_stats/__pycache__/*
 domain_stats/data/*
+dist/*
