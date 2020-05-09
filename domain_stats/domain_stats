@@ -254,7 +254,7 @@ class ThreadedDomainStats(socketserver.ThreadingMixIn, http.server.HTTPServer):
 if __name__ == "__main__":
     if sys.version_info.minor < 6:
         print("Please update your installation of Python.")
-        sys.exit(1d)
+        sys.exit(1)
     #Initialize the global variables
     if len(sys.argv) != 2:
         print("domain_stats requires one argument. You must pass the path to a folder for data storage and processing.")
