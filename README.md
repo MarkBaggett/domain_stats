@@ -1,8 +1,6 @@
 # domain_stats2
 
-ATTENTION:    THIS CODE BASE IS CURRENTLY IN BETA
-
-But I have some exciting news.  The SANS isc is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. 
+The SANS ISC (Internet Storm Center) is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. **Note ISC Integration is disabled for the moment until it's release.
 
 TO INSTALL:
 
@@ -11,6 +9,14 @@ Install it as a Python package.  At a bash prompt run the following:
 $ apt-get install python-pip
 $ pip install pyyaml rdap domain_stats
 ```
+
+If you have problems remember this is early code. You might choose to install it from github instead to get the latest fixes.
+```
+$ git clone https://github.com/markbaggett/domain_stats
+$ cd domain_stats
+$ python setup.py install
+```
+
 Then make a directory that will be used to for storage of data and configuration files and run domain_stats.  Pass it the path to the directory you created.
 ```
 $ mkdir data
@@ -68,6 +74,8 @@ Anytime you see a "???-FIRST-CONTACT" on a domain that has been running for some
 
 
 The goal is to push as much of the "ESTABLISHED" data to the client local lan as possible. This minimizes network traffic keeps as much data as possible on the client network. When contacting the central server it will periodically inform the client to pull list of new domains and add them to the client established database.
+
+The domain_stats.yaml file has many useful configurations includeing the "mode".  For now it is in "rdap" mode by default.  Which means instead of going to the ISC for domains it will do RDAP queries.  This is a useful stop gap measure but lacks the additional alerting providing by the ISC.
 
 More data to come later as features and functions are more firmly established.
 
