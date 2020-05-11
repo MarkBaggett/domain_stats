@@ -86,15 +86,20 @@ class DomainStatsDatabase(object):
             self.stats.insert += 1
         return 1
 
-    def delete_record(self, domain):
+    def delete_record(self, domain, expires=None):
         log.info("Deleting record from database for {}".format(domain))
         db = sqlite3.connect(self.filename, timeout=15)
         cursor = db.cursor()
+        deletecount = 0
         with self.lock:
-            cursor.execute("delete from domains where domain=?", (domain,))
+            if expires:
+                result = cursor.execute("delete from domains where domain=? and expires=?", (domain,expires))
+            else:    
+                result = cursor.execute("delete from domains where domain=?", (domain,))
             db.commit()
-            self.stats.delete += 1
-        return 1
+            deletecount = result.rowcount
+            self.stats.delete += deletecount
+        return deletecount
 
     def get_record(self, domain):
         #Pass the timezone offset  hardcoded to utc for now
@@ -160,7 +165,7 @@ class DomainStatsDatabase(object):
                         db.commit()
                         log.debug(f"Record for {domain} already exists. Expiration was {record[1]} is now {expires}.")
             elif command == "-":
-                self.delete_record(domain)
+                self.delete_record(domain,expires)
                 log.debug(f"Deleted record for {domain}")
         db.commit()
         print("\r|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| 100.00% FINISHED")
