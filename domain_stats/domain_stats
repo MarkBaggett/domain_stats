@@ -265,7 +265,7 @@ if __name__ == "__main__":
         sys.exit(1)
     if not (working_path / "domain_stats.yaml").exists():
         print("No configuration file found.")
-        if input("Would you like to copy the required files to this folder?"):
+        if input("Would you like to copy the required files to this folder?").lower().startswith("y"):
             setup_folder(sys.argv[1])
         else:
             print("Pass a path to a folder containing domain_stats.yaml")
