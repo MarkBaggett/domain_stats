@@ -1,27 +1,34 @@
 # domain_stats2
 
+## Introduction
 The SANS ISC (Internet Storm Center) is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. **Note ISC Integration is disabled for the moment until it's release.
 
-TO INSTALL:
+## The Old Domain_stats
+This version of domains_stats provides a number of benefits over the old version includeing performance, scalability, alerting, and isc integration.  It does focus on born-on information which was the primary use of the tool and achieves its increaces performance by not processing the entire whois record.  If you are looking for a copy of the old domain_stats which rendered ALL of the whois record rather than just the born-on information please let me make two suggestions.  First, that functionality has been moved to a new tool called "APIify" which can render any standard linux command in a json response for consumption.  It also has improved caching and scalability over the old domain_stats.   You can download [APIify HERE](https://github.com/markbaggett/apiify).   You can also find the old version of domain_stats [in the releases section](https://github.com/MarkBaggett/domain_stats/releases/tag/1.0).
+
+## TO INSTALL:
 
 Install it as a Python package.  At a bash prompt run the following:
 ```
-$ apt-get install python-pip
-$ pip install pyyaml rdap domain_stats
+$ apt-get install python3-pip
+$ python3 -m pip install pyyaml rdap domain_stats
 ```
 
 If you have problems remember this is early code. You might choose to install it from github instead to get the latest fixes.
+Note: pyyaml and rdap must be installed before running setup.
+
 ```
+$ python3 -m pip install pyyaml rdap
 $ git clone https://github.com/markbaggett/domain_stats
 $ cd domain_stats
-$ python setup.py install
+$ python3 setup.py install
 ```
 
 Then make a directory that will be used to for storage of data and configuration files and run domain_stats.  Pass it the path to the directory you created.
 ```
 $ mkdir data
 $ cd data
-$ domain_stats .
+$ domain_stats ./
 ```
 
 domain_stats should setup the directory and start listening.
@@ -29,6 +36,8 @@ domain_stats should setup the directory and start listening.
 
 ![alt text](./domain_stats.gif "Installation and use")
 
+
+## Using domain_stats
 
 This is a complete rewrite and new approach to managing baby domains in your organization.  Based on feedback from the community Domain_stats was really only used for baby domain information.  This new iteration focuses on that data and how to make it useful.  In this process it now tracks "FIRST CONTACT" so you know when your organization and/or the ISC has seen that domain before.
 
@@ -87,9 +96,62 @@ Will show statistics on the efficiency of the memory cache and the database hit 
 $ wget -q -O- http://127.0.0.1:8000/showcache
 Will dump the cache
 
+# Configuration
+
+domain_stats behavior can be changed my modifying domain_stats.yaml that is in its setup directory.  In that file you will find the following useful items.
+
+- You can adjust the maximum number of items domain stats will keep in memory cache with cached_max_items. Each record consumes 32 bytes so 65536 assumes you can spare about 2MB of memory for the cache. For performance reasons this number should be a power of 2.
+```
+cached_max_items: 65536
+```
+- You can specify the name of the database with database_file.
+```
+database_file: domain_stats.db
+```
+- What IP address do you want domain stats to listen on? 0.0.0.0 means all public and private IP addresses. You should change this to 127.0.0.1 if you run domain_stats on the same server that is doing the request to the API.
+```
+local_address: 0.0.0.0
+```
+- Set which TCP port do you want the server to listen on with local_port
+```
+local_port: 8000
+```
+- The name of the file where you want to store the memory cache on disk when the tool exists. Keep this in a SECURE location.
+```
+memory_cache: domain_stats.cache
+```
+- The prohibited_tlds is a section that lists top level domains that will not be sent to the central server for resolution. List each domain beneith the word "prohibited_tlds" (Yes i know they are not TLDS) with a **dash space** in front of them.
+```
+prohibited_tlds:
+- yourdomainhere.local
+```
+- server_name is the hostname of the central domain stats server use to lookup host that are not in the database when in isc mode
+```
+server_name: domain_stats.isc.sans.edu
+```
+- This is the tcp port the central isc domain stats server
+```
+server_port: 4100
+```
+- Where to get new domain expiration data from when domain_stats_db_admin -u is run
+```
+target_updates: https://raw.githubusercontent.com/MarkBaggett/domain_stats/master/data
+```
+- ALL timestamps are UTC if you want "seen_my_you" to be in your local timezone make that adjustment here. Example EST=-5 EDT=-4, etc.  The server does not change this value automatically during daylight savings time.
+```
+timezone_offset: 0
+```
+- Control the amount of data logged with log_detail.  0=off, 1=on, 2=debug
+```
+log_detail: 0
+```
+- Mode can be isc or rdap. rdap is local resolution with no community data. isc has the good stuff.
+```
+mode: rdap
+```
 
 
-# ISC API Specification
+# ISC API Specification 
 API requests look like this
 ```
 {"command":  <command string>,  additional arguments depending upon command}
