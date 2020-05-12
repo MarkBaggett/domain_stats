@@ -33,8 +33,10 @@ $ domain_stats ./
 
 domain_stats should setup the directory and start listening.
 
-
 ![alt text](./domain_stats.gif "Installation and use")
+
+## SEIM Integration:
+This varies depending upon the SEIM. The web interface is designed for your SEIM to make API calls to it.  It will respond back with a JSON responce for you it to consume.  Since many SEIM products are already configured to consume ZEEK logs another easy option is to add the ["domain_stats.zeek"](./domain_stats/utils/domain_stats.zeek) module to your zeek configuration. 
 
 
 ## Using domain_stats
