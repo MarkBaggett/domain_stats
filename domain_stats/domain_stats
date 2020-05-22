@@ -62,10 +62,10 @@ def health_check():
     interval = isc_connection.get_status(software_version, database.version, cache, database.stats)
     min_client, min_data = isc_connection.get_config()
     if software_version < min_client:
-        log.info(f"The client software is out of date.  ISC lookups are disabled.  Update software to reenable this functionality.")
+        log.info("The client software is out of date.  ISC lookups are disabled.  Update software to reenable this functionality.")
         isc_connection.enabled=False
     if database.version < min_data:
-        log.info(f"Database is out of date.  Forcing update from {database.version} to {min_data}")
+        log.info("Database is out of date.  Forcing update from {0} to {1}".format(database.version,min_data))
         database.update_database(min_data, config['target_updates'])
     if interval:
         health_thread = threading.Timer(interval * 60, health_check)
@@ -84,14 +84,14 @@ def setup_folder(destination_path):
     source_path = pathlib.Path(importlib.util.find_spec("domain_stats").origin).parent
     yaml_path = source_path / "domain_stats.yaml"
     if not yaml_path.is_file():
-        print(f"Unable to find the domain_stats.yaml file in {source_path}")
+        print("Unable to find the domain_stats.yaml file in {0}".format(source_path))
         sys.exit(1)
     shutil.copy2(yaml_path, destination_path)
     if not bash_cmd("which domain_stats_db_admin")[0]:
-        print(f'domain_stats_db_admin was not found. Add it to your OS path and run "domain_stats_db_admin --create --update domain_stats.db"')
+        print('domain_stats_db_admin was not found. Add it to your OS path and run "domain_stats_db_admin --create --update domain_stats.db"')
         sys.exit(1)
     else:
-        os.system(f'cd {destination_path}; domain_stats_db_admin --create --update domain_stats.db')
+        os.system('cd {0}; domain_stats_db_admin --create --update domain_stats.db'.format(destination_path))
     print("Folder Initialization Complete.")
 
 
@@ -108,7 +108,7 @@ def reduce_domain(domain_in):
             #print("trim top part", domain_in, domain)
     else:
         domain = ".".join(parts)
-    log.debug(f"Trimmed domain from {domain_in} to {domain.lower()}")
+    log.debug("Trimmed domain from {0} to {1}".format(domain_in,domain.lower()))
     return domain.lower()
 
 def json_response(web,isc,you,cat,alert):
@@ -116,11 +116,11 @@ def json_response(web,isc,you,cat,alert):
 
 def domain_stats(domain):
     global cache
-    log.debug(f"New Request for domain {domain}.  Here is the cache info: {cache.keys()} {cache.cache_info()}")
+    log.debug("New Request for domain {0}.  Here is the cache info:{1} {2}" format(domain,cache.keys(), cache.cache_info()))
     #First try to get it from the Memory Cache
     domain = reduce_domain(domain)
     cache_data = cache.get(domain)
-    log.debug(f"Is the domain in cache?  {bool(cache_data)}")
+    log.debug("Is the domain in cache? {}".format(bool(cache_data)))
     if cache_data:
         return cache_data
     #If it isn't in the memory cache check the database
@@ -148,7 +148,7 @@ def domain_stats(domain):
             resp = json_response(record_seen_by_web, record_seen_by_isc, record_seen_by_you,category,alerts)
             cache_resp = json_response(record_seen_by_web, record_seen_by_isc, record_seen_by_you,category,[])
             cache.set(domain,cache_resp, hours_to_live=cache_expiration)
-            log.debug(f"New Cache Entry! {cache.keys()} , {cache.cache_info()}")
+            log.debug("New Cache Entry! {} {}".format(cache.keys() ,cache.cache_info()))
             return resp
         elif config.get("mode")=="rdap":
             alerts = ["YOUR-FIRST-CONTACT"]
@@ -271,21 +271,21 @@ if __name__ == "__main__":
             print("Pass a path to a folder containing domain_stats.yaml")
             sys.exit(1)
     yaml_path = str(working_path / "domain_stats.yaml")
-    print(f"Using config {str(yaml_path)}")
+    print("Using config {}".format( str(yaml_path)))
     config = Config(str(yaml_path))
     data_path = working_path / config['database_file']
     cache_file = working_path / config['memory_cache'] 
-    print(f"Using database {str(data_path)}")
-    print(f"Using cache {str(cache_file)}")
+    print("Using database {}".format( str(data_path)))
+    print("Using cache {}".format( str(cache_file)))
     
     if not data_path.exists():
-        print(f"Database specified in domain_stats.yaml not found. Try creating it by running:\n$python domain_stats_db_admin --create --update {config['database_file']}")
+        print("Database specified in domain_stats.yaml not found. Try creating it by running:\n$python domain_stats_db_admin --create --update {}".format(config['database_file']))
         sys.exit(1)
     cache = ExpiringCache()
     #Reload memory cache
     if cache_file.exists():
-        print(f"Cache Found!!. Reloading memory cache from previous run.")
-        print(f"If you do not wish to use the previous data then delete the cache by executing \"rm {config.get('memory_cache')}\" ")
+        print("Cache Found!!. Reloading memory cache from previous run.")
+        print("If you do not wish to use the previous data then delete the cache by executing \"rm {}\" ".format(config.get('memory_cache')))
         cache.cache_load(str(cache_file))    
     database = DomainStatsDatabase(str(data_path))
     isc_connection = IscConnection()
