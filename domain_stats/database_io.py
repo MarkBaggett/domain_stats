@@ -17,7 +17,8 @@ class database_stats:
         self.delete = delete
 
     def __repr__(self):
-        return f"database_stats(hit={self.hit},miss={self.miss},insert={self.insert},delete={self.delete})"
+        repr = "database_stats(hit={0},miss={1},insert={2},delete={3})".format(self.hit,self.miss,self.insert,self.delete)
+        return repr
 
 def reduce_domain(domain_in):
     parts =  domain_in.strip().split(".")
@@ -41,7 +42,7 @@ class DomainStatsDatabase(object):
         self.lock = threading.Lock()
         self.stats = database_stats()
         if not pathlib.Path(self.filename).exists():
-            print(f"WARNING: Database not found. {self.filename}")
+            print("WARNING: Database not found. {}".format(self.filename))
             return
         db = sqlite3.connect(filename, timeout=15)
         cursor = db.cursor()
@@ -60,11 +61,11 @@ class DomainStatsDatabase(object):
     def reset_first_contact(self):
         db= sqlite3.connect(self.filename)
         log.info("Database_admin was used to reset all of the seen_by_you dates to FIRST-CONTACT")
-        print(f"Resetting all seen_by_you dates to FIRST-CONTACT.")
+        print("Resetting all seen_by_you dates to FIRST-CONTACT.")
         cursor = db.cursor()
         cursor.execute("update domains set seen_by_you=?", ("FIRST-CONTACT",))
         db.commit() 
-        print(f"RESET! You probably want to also delete your .cache file at this time.")
+        print("RESET! You probably want to also delete your .cache file at this time.")
 
     def update_record(self, domain, record_seen_by_web, record_expires, record_seen_by_isc, record_seen_by_you):
         record_seen_by_web = record_seen_by_web.strftime('%Y-%m-%d %H:%M:%S')
@@ -114,12 +115,12 @@ class DomainStatsDatabase(object):
             web,expires,isc,you = record
         else:
             self.stats.miss += 1
-            log.info(f"No record in the database for {domain}  Returning None.")
+            log.info("No record in the database for {} returning None.".format(domain))
             return (None,None,None,None)
         web = datetime.datetime.strptime(web, '%Y-%m-%d %H:%M:%S')
         expires = datetime.datetime.strptime(expires, '%Y-%m-%d %H:%M:%S')
         if expires < datetime.datetime.utcnow():
-            log.info(f"Expired domain in database {domain} {expires}. Deleted")
+            log.info("Expired domain in database deleted. {} {}".format( domain,expires))
             with self.lock:
                 cursor.execute("delete from domains where domain=?", (domain,))
                 db.commit()
@@ -141,7 +142,7 @@ class DomainStatsDatabase(object):
         """ if command is + we add the record setting if it doesnt already exist"""
         """ if command is - we delete the record"""
         if not pathlib.Path(update_file).exists():
-            log.info(f"The specified update file {update_file} does not exists.")
+            log.info("The specified update file {} does not exists.".format(update_file))
             return 0
         new_domains = open(update_file).readlines()
         num_recs = len(new_domains)
@@ -158,15 +159,15 @@ class DomainStatsDatabase(object):
                 record = cursor.execute("select seen_by_web, expires, seen_by_isc, seen_by_you from domains where domain = ?" , (domain,) ).fetchone()
                 if not record:
                     self.update_record(domain, web, expires,"LOCAL", "FIRST-CONTACT")
-                    log.debug(f"Record added to database for domain {domain}")
+                    log.debug("Record added to database for domain {}".format(domain))
                 else:
                     with self.lock:
                         cursor.execute("update domains set expires=? where domain =?", (expires, domain))
                         db.commit()
-                        log.debug(f"Record for {domain} already exists. Expiration was {record[1]} is now {expires}.")
+                        log.debug("Record for {0} already exists. Expiration was {1} is now {2}.".format(domain, record[1], expires))
             elif command == "-":
                 self.delete_record(domain,expires)
-                log.debug(f"Deleted record for {domain}")
+                log.debug("Deleted record for {}".format(domain) )
         db.commit()
         print("\r|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| 100.00% FINISHED")
         return num_recs
@@ -175,24 +176,24 @@ class DomainStatsDatabase(object):
         new_records_count = 0
         latest_major, latest_minor = map(int, str(latest_version).split("."))
         current_major, current_minor = map(int, str(self.version).split("."))
-        dst_folder = pathlib.Path(self.filename).parent / "data" / f"{current_major}"
+        dst_folder = pathlib.Path(self.filename).parent / "data" / str(current_major)
         if not dst_folder.exists():
             os.makedirs(dst_folder)
-        log.info(f"Updating from {self.version} to {latest_version}")
+        log.info("Updating from {} to {}".format(self.version,latest_version))
         if latest_major > current_major:
             log.info("WARNING: Domain Stats database is a major revision behind. Database required rebuild.")
             raise Exception("WARNING: Domain Stats database is a major revision behind. Database required rebuild.")
         target_updates = range(current_minor+1, latest_minor+1 )
         for update in target_updates:
-            version = f"{current_major}.{update}"
-            log.info(f"Now applying update {version}")
-            tgt_url = f"{update_url}/{current_major}/{update}.txt"
-            dst_path = pathlib.Path().cwd() / "data" / f"{current_major}" / f"{update}.txt"
+            version = "{}.{}".format(current_major,update)
+            log.info("Now applying update {}".format(version))
+            tgt_url = "{}/{}/{}.txt".format(update_url, current_major, update)
+            dst_path = pathlib.Path().cwd() / "data" / str(current_major) / "{}.txt".format(update)
             try:           
                 urllib.request.urlretrieve(tgt_url, str(dst_path))
             except:
-                print(f"ERROR: Unable to access database updates. {tgt_url}")
-                log.critical(f"Unable to access database updates. {tgt_url}")
+                print("ERROR: Unable to access database updates. {}".format(tgt_url))
+                log.critical("Unable to access database updates. {}".format(tgt_url))
                 return self.version, 0
             new_records_count += self.process_update_file(str(dst_path))
         self.version = latest_version
