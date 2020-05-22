@@ -116,7 +116,7 @@ def json_response(web,isc,you,cat,alert):
 
 def domain_stats(domain):
     global cache
-    log.debug("New Request for domain {0}.  Here is the cache info:{1} {2}" format(domain,cache.keys(), cache.cache_info()))
+    log.debug("New Request for domain {0}.  Here is the cache info:{1} {2}".format(domain,cache.keys(),cache.cache_info() ))
     #First try to get it from the Memory Cache
     domain = reduce_domain(domain)
     cache_data = cache.get(domain)

@@ -16,7 +16,8 @@ class cache_stats:
         self.expire = expire
 
     def __repr__(self):
-        return f"cache_stats(hit={self.hit}, miss={self.miss}, expire={self.expire})"
+        repr = "cache_stats(hit={0}, miss={1}, expire={2})".format(self.hit,self.miss,self.expire)
+        return repr
 
     def reset(self):
         self.hit = self.miss = self.expire = 0
@@ -44,7 +45,8 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
 
     def cache_info(self):
         """JSON transmitable Report cache performance statistics"""
-        rpt =  f"""{self.stats}, ('Max Size': {self.maxsize}, 'Current size': {len(self)}, 'Cache Bytes':{sys.getsizeof(self)}, 'Application Kilobytes':{resource.getrusage(resource.RUSAGE_SELF).ru_maxrss})"""
+        rpt =  "{0}, ('Max Size': {1}, 'Current size': {2}, 'Cache Bytes':{3}, 'Application Kilobytes':{4})".format(self.stats,self.maxsize,len(self),sys.getsizeof(self),resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        #rpt =  f"""{self.stats}, ('Max Size': {self.maxsize}, 'Current size': {len(self)}, 'Cache Bytes':{sys.getsizeof(self)}, 'Application Kilobytes':{resource.getrusage(resource.RUSAGE_SELF).ru_maxrss})"""
         return rpt
 
     def cache_report(self):
@@ -57,12 +59,12 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
         return rpt
 
     def cache_dump(self, fname):
-        log.debug(f"Dumping cache to file {fname}")
+        log.debug("Dumping cache to file {}".format(fname))
         with open(fname,"wb") as fhandle:
             pickle.dump(list(self.items()), fhandle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def cache_load(self, fname):
-        log.debug(f"Loading cache from file {fname}")
+        log.debug("Loading cache from file {}".format(fname))
         self.clear()
         with open(fname, "rb") as fhandle:
             other = pickle.load(fhandle)
@@ -117,11 +119,11 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
         """Setting hours_to_live to -1 and they won't expire but can page out if least recently used."""
         """Set to -2 and they do not expire and the LRU can not remove them. Permanent entries in the cache (use with caution)"""
         """Set to 0 and the record is treated as already expired. nothing is added to the cache"""
-        log.debug(f"cache set called {key} {value} {hours_to_live}")
+        log.debug("cache set called {} {} {}".format( key, value, hours_to_live))
         if hours_to_live == None:
             hours_to_live = self.hours_to_live
         if hours_to_live == 0:
-            log.debug(f"hours to live set to zero.  Not caching. {key} {value}")
+            log.debug("hours to live set to zero.  Not caching.{} {}".format(key,value))
             return
         if hours_to_live < 0:
             expires = hours_to_live
