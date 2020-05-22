@@ -49,7 +49,7 @@ class IscConnection():
         deny_client = isc_response.get("deny_client")
         if deny_client:
             reason = ",".join(deny_client)
-            log.info(f"The ISC denied the client. Reason: {reason}")
+            log.info("The ISC denied the client. Reason: {}".format(reason))
             self.isc_enable = False
         return interval
 
@@ -81,11 +81,11 @@ class IscConnection():
         isc_response = json.loads(fake_isc_response)
         expected_database = isc_response.get("expected_database_version")
         if expected_database != database_version:
-            log.debug(f"Database is out of date. ISC expected {expected_database}. Running {database_version}")
+            log.debug("Database is out of date. ISC expected {}. Running {}".format(expected_database, database_version) )
             return ( True, 0.1 , ["UPDATE-DATABASE", str(expected_database)] ) 
         expected_client = isc_response.get("expected_client_version")
         if expected_client != client_version:
-            log.debug(f"Warning Client Software is out of data.")
+            log.debug("Warning Client Software is out of data.")
             client_messages.append("Your version of domain_stats is out of date.  Please update.")
         deny_client = isc_response.get("deny_client")
         if deny_client:
@@ -102,8 +102,8 @@ class IscConnection():
         #resp = request.post( , configrequest)
         resp = json.loads(json.dumps({'expected_database_version':1.0, 'expected_client_version':1.0, 'prohibited_tlds': ['.local', '.arpa'] }))
         if sorted(resp.keys()) != ['expected_client_version', 'expected_database_version', 'prohibited_tlds']:
-            print(f"Invalid ISC response requesting server config {resp}")
-            log.info(f"Invalid ISC response requesting server config {resp}")
+            print("Invalid ISC response requesting server config {}".format(resp))
+            log.info("Invalid ISC response requesting server config {0}".format(resp))
         return resp
 
 
@@ -140,7 +140,7 @@ class IscConnection():
         #Process ISC response
         resp = json.loads(fake_isc_response)
         if sorted(resp.keys()) != ['alerts', 'expires', 'seen_by_isc', 'seen_by_web']:
-            log.info(f"INVALID ISC RESPONSE MISSING KEY FIELDS {resp}")
+            log.info("INVALID ISC RESPONSE MISSING KEY FIELDS {0}".format(resp))
             raise Exception("ISC RESPONSE to domain request MISSING KEY FIELDS.")
         web = resp['seen_by_web']
         if web != "ERROR":
