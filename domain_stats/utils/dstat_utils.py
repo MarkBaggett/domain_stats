@@ -15,11 +15,11 @@ def get_creation_date(whois_record, debug=False):
         #Enhancement: Improve by fiding the most recent born on date
         born_on = min(born_on)
     if born_on == "invalid-creation_date":
-        log.debug(f"{'*'*50}Improve whois record parser for creation date. {whois_record}")
+        log.debug("{} Improve whois record parser for creation date.{}".format('*'*50, whois_record))
     try:
         datetime_object = datetime.datetime.strptime(str(born_on), '%Y-%m-%d %H:%M:%S')
     except Exception as e:
-        log.debug(f"Creation date parsing could not convert to timestamp. Falling to client query. {str(e)}")
+        log.debug("Creation date parsing could not convert to timestamp. Falling to client query. {}".format( str(e)))
         return False
     return datetime_object
 
@@ -49,7 +49,7 @@ def new_domain(cursor, rank,domain):
             try:
                 cursor.execute("delete from domains where domain = ?", (domain,)) 
             except Exception as e:
-                print(f"Warning: {str(e)}")
+                print("Warning: {}".format( str(e)))
         else:
             try:
                 result = cursor.execute(sql , (domain, "ESTABLISHED", "ESTABLISHED", "FIRST-CONTACT" ,rank, "{}" ) )
@@ -57,7 +57,7 @@ def new_domain(cursor, rank,domain):
                 if "UNIQUE constraint failed" in str(e) or "is not unique" in str(e):
                     return False
                 else:
-                    print(f"Error inserting record - {str(e)}, {dir(e)}")
+                    print("Error inserting record - {},{}".format(str(e),dir(e)))
                     raise(e)
     return True
 
