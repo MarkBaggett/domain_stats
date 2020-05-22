@@ -4,6 +4,9 @@
 
 module DomainStats;
 
+#Uncomment the next line if running in a VM or other system where packets normally have bad checksums.
+#redef ignore_checksums = T;
+
 export {
     # This redef is purely for testing pcap and not designed for active networks
     # Set to F or comment before adding to production

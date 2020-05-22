@@ -1,7 +1,7 @@
 # domain_stats2
 
 ## Introduction
-The SANS ISC (Internet Storm Center) is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. **Note ISC Integration is disabled for the moment until it's release.
+The SANS ISC (Internet Storm Center) is providing some funding and will pay for whois API access.   This improves the data quality and reliability but it completely changes the way I access the data.  This requires a significant rewrite.  This is in a transitional state right now as I move from the old to the new. **Note ISC Integration is disabled for the moment.  It will be enabled in a future release.
 
 ## The Old Domain_stats
 This version of domains_stats provides a number of benefits over the old version includeing performance, scalability, alerting, and isc integration.  It does focus on born-on information which was the primary use of the tool and achieves its increaces performance by not processing the entire whois record.  If you are looking for a copy of the old domain_stats which rendered ALL of the whois record rather than just the born-on information please let me make two suggestions.  First, that functionality has been moved to a new tool called "APIify" which can render any standard linux command in a json response for consumption.  It also has improved caching and scalability over the old domain_stats.   You can download [APIify HERE](https://github.com/markbaggett/apiify).   You can also find the old version of domain_stats [in the releases section](https://github.com/MarkBaggett/domain_stats/releases/tag/1.0).
@@ -36,7 +36,20 @@ domain_stats should setup the directory and start listening.
 ![alt text](./domain_stats.gif "Installation and use")
 
 ## SEIM Integration:
-This varies depending upon the SEIM. The web interface is designed for your SEIM to make API calls to it.  It will respond back with a JSON responce for you it to consume.  Since many SEIM products are already configured to consume ZEEK logs another easy option is to add the ["domain_stats.zeek"](./domain_stats/utils/domain_stats.zeek) module to your zeek configuration. 
+This varies depending upon the SEIM. The web interface is designed for your SEIM to make API calls to it.  It will respond back with a JSON responce for you it to consume.  Since many SEIM products are already configured to consume ZEEK logs another easy option is to add the ["domain_stats.zeek"](./domain_stats/utils/domain_stats.zeek) module to your zeek configuration. Check the zeek domainstats.log for "NEW" domains and check for alerts such as "YOUR-FIRST-CONTACT".
+
+### Example Zeek Configuration:
+
+Assuming that zeek is installed in `/opt/zeek` and you don't already have custom scripts configured you can do this:
+
+ - Place domain_stats.zeek in a new directory called `/opt/zeek/share/zeek/policy/custom-script`
+ - Add `@load ./domain_stats` to a new file called `/opt/zeek/share/zeek/policy/custom-script/__load__.zeek`  
+ - Add `@load custom-scripts` to `/opt/zeek/share/zeek/site/local.zeek`
+ - Make sure curl is installed. This is a dependency of zeeks ActiveHTTP module. (try `apt install curl`)
+ - If you are running zeek in a VM you need uncommment `redef ignore_checksums = T;` in domain_stats.zeek
+ - Start domain_stats server
+ - In zeekctl `deploy`
+ - Confirm domain_stats appears in loaded_scripts.log
 
 
 ## Using domain_stats
