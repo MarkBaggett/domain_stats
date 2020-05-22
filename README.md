@@ -46,7 +46,7 @@ Assuming that zeek is installed in `/opt/zeek` and you don't already have custom
  - Add `@load ./domain_stats` to a new file called `/opt/zeek/share/zeek/policy/custom-script/__load__.zeek`  
  - Add `@load custom-scripts` to `/opt/zeek/share/zeek/site/local.zeek`
  - Make sure curl is installed. This is a dependency of zeeks ActiveHTTP module. (try `apt install curl`)
- - If you are running zeek in a VM you need uncommment `redef ignore_checksums = T;` in domain_stats.zeek
+ - If you are running zeek in a VM you need uncomment `redef ignore_checksums = T;` in domain_stats.zeek
  - Start domain_stats server
  - In zeekctl `deploy`
  - Confirm domain_stats appears in loaded_scripts.log
