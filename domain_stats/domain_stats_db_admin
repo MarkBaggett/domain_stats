@@ -29,8 +29,8 @@ if __name__ == "__main__":
     mode = config.get("mode")
 
     if args.filename != config.get("database_file"):
-        print(f"domain_stats.yaml uses database file :{config.get('database_file')}")
-        print(f"You have specified to use file {args.filename}")
+        print("domain_stats.yaml uses database file :{}".format( config.get('database_file')))
+        print("You have specified to use file {}".format(args.filename))
 
     if args.create:
         if pathlib.Path(args.filename).exists():
@@ -43,7 +43,7 @@ if __name__ == "__main__":
             database.create_file(args.filename)
 
     if not pathlib.Path(args.filename).exists:
-        print(f"The file {args.filename} does not exists.  Aborting")
+        print("The file {} does not exists.  Aborting".format(args.filename))
         sys.exit(1)
 
     if args.update:
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         elif mode == "rdap":
             min_client, min_data = rdap_query.get_config( config['target_updates'])
         if database.version < min_data:
-            print(f"Database is out of date.  Forcing update from {database.version} to {min_data}")
+            print("Database is out of date.  Forcing update from {} to {}.".format( database.version, min_data))
             database.update_database(min_data, config['target_updates'])
 
     if args.firstcontacts:
@@ -64,6 +64,6 @@ if __name__ == "__main__":
         elif mode == "rdap":
             min_client, min_data = rdap_query.get_config(config['target_updates'])
         server_version = database.version
-        print(f"Local Version:{database.version}  Server Version:{min_data}")
+        print("Local Version:{}  Server Version:{}".format( database.version, min_data))
 
     
