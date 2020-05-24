@@ -38,6 +38,8 @@ import shutil
 import os
 import importlib
 import subprocess
+import signal
+import argparse
 
 #import domain_stats.expiring_cache as expiring_cache
 log = logging.getLogger("domain_stats")
@@ -47,8 +49,6 @@ from domain_stats.database_io import DomainStatsDatabase
 from domain_stats.network_io import IscConnection
 from domain_stats.config import Config
 from domain_stats.rdap_query import get_domain_record
-
-
 
 def dateconverter(o):
     if isinstance(o, datetime.datetime):
@@ -79,6 +79,20 @@ def bash_cmd(cmdline,input=b""):
     out,err = ph.communicate(input)
     return out,err
 
+def clean_exit(*ignored_args,**ignored_kwargs):        
+    print("Web API Disabled...")
+    print("Control-C hit: Exiting server.  Please wait..")
+    try:
+        server.shutdown()
+        server.server_close()
+        if health_thread:
+            health_thread.cancel()
+    except:
+        print("Unable to stop server.")
+    print("Commiting Cache to disk...")
+    cache.cache_dump(args.working_path /  config['memory_cache'] )
+    print("Bye!")
+    sys.exit(0)
 
 def setup_folder(destination_path):
     source_path = pathlib.Path(importlib.util.find_spec("domain_stats").origin).parent
@@ -252,29 +266,32 @@ class ThreadedDomainStats(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 
 if __name__ == "__main__":
-    if sys.version_info.minor < 6:
+    signal.signal(signal.SIGINT, clean_exit)
+    signal.signal(signal.SIGTERM, clean_exit)
+    parser=argparse.ArgumentParser()
+    parser.add_argument('-y','--yes',action='store_true',help='Answer YES when asked to setup directory.')
+    parser.add_argument('-c','--console',action='store_true',help='Start domain_stats as a thread in a python console.')
+    parser.add_argument("working_path",type=pathlib.Path,help="A Directory that will be used to store and process domain_statss data.")
+    args = parser.parse_args()
+    if not args.working_path.is_dir():
+        print("Sorry.  The path specified is invalid.  The directory you provide must already exist.")
+        sys.exit(1)
+    if sys.version_info.minor < 5 or sys.version_info.minor < 3:
         print("Please update your installation of Python.")
         sys.exit(1)
     #Initialize the global variables
-    if len(sys.argv) != 2:
-        print("domain_stats requires one argument. You must pass the path to a folder for data storage and processing.")
-        sys.exit(1)
-    working_path = pathlib.Path(sys.argv[1])
-    if not working_path.exists() and working_path.is_dir():
-        print("The argument specified is not a valid current directory.")
-        sys.exit(1)
-    if not (working_path / "domain_stats.yaml").exists():
+    if not (args.working_path / "domain_stats.yaml").exists():
         print("No configuration file found.")
-        if input("Would you like to copy the required files to this folder?").lower().startswith("y"):
-            setup_folder(sys.argv[1])
+        if args.yes or input("Would you like to copy the required files to this folder?").lower().startswith("y"):
+            setup_folder(args.working_path)
         else:
             print("Pass a path to a folder containing domain_stats.yaml")
             sys.exit(1)
-    yaml_path = str(working_path / "domain_stats.yaml")
+    yaml_path = str(args.working_path / "domain_stats.yaml")
     print("Using config {}".format( str(yaml_path)))
     config = Config(str(yaml_path))
-    data_path = working_path / config['database_file']
-    cache_file = working_path / config['memory_cache'] 
+    data_path = args.working_path / config['database_file']
+    cache_file = args.working_path / config['memory_cache'] 
     print("Using database {}".format( str(data_path)))
     print("Using cache {}".format( str(cache_file)))
     
@@ -292,7 +309,7 @@ if __name__ == "__main__":
     software_version = 1.0
 
     log = logging.getLogger("domain_stats")
-    logfile = logging.FileHandler(str(working_path / 'domain_stats.log'))
+    logfile = logging.FileHandler(str(args.working_path / 'domain_stats.log'))
     logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(message)s')
     logfile.setFormatter(logformat)
     if config['log_detail'] == 0:
@@ -327,21 +344,12 @@ if __name__ == "__main__":
     else:
         health_thread = None
 
-    try:
-        server_thread.start()
-        #code.interact(local=locals())
+    
+    server_thread.start()
+    if args.console:
+        code.interact(local=locals())
+    else:
         while True: time.sleep(100)
-    except (KeyboardInterrupt, SystemExit):
-        server.shutdown()
-        server.server_close()
-        
-    print("Web API Disabled...")
-    print("Control-C hit: Exiting server.  Please wait..")
-    if health_thread:
-        health_thread.cancel()
-    print("Commiting Cache to disk...")
-    cache.cache_dump( working_path /  config['memory_cache'] )
 
-    print("Bye!")
 
 
