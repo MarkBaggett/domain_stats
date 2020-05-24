@@ -1,10 +1,8 @@
 FROM ubuntu:18.04
 
 #docker build -tag domain_stats_image http://github.com/markbaggett/domain_stats.git
-
 #Configure the container choosing your hosts path and port
-#docker run -name domain_stats_container -v /<a path on your host>:/host_mounted_dir -p 8000:<port on your host> domain_stats_image domain_stats_db_admin -cu /host_mounted_dir
-#docker run -name domain_stats_container -v /<a path on your host>:/host_mounted_dir -p 8000:<port on your host> domain_stats_image
+#docker run --name domain_stats_container -v /<a path on your host>:/host_mounted_dir -p 8000:<port on your host> domain_stats_image
 
  
 # Install all the tools
