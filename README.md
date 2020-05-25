@@ -37,12 +37,13 @@ domain_stats should setup the directory and start listening.
 
 ## Install as a container
 
-To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. Run docker run once with the -it option so you can see it finish its setup.  Then hit CONTROL-C and run it again with the -d option. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
+To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 10000 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can see it finish its setup.  Then hit CONTROL-C and run it again with the -d option as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
  
 
 ```
 $ docker build --tag domain_stats_image http://github.com/markbaggett/domain_stats.git
-$ docker run -it --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
+$ mkdir ~/dstat_data
+$ docker run -it --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:10000 domain_stats_image
 No configuration file found.
 WARNING: Database not found. domain_stats.db
 Database is out of date.  Forcing update from 1.0 to 1.3.
