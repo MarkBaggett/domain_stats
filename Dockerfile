@@ -13,4 +13,4 @@ COPY . /app
 RUN cd app && python3 setup.py install
 RUN mkdir /host_mounted_dir
 
-CMD ["domain_stats" ,"-y","-c","/host_mounted_dir"]
+CMD ["domain_stats" ,"-y","/host_mounted_dir"]
