@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install python3.8 python3-pip -y
 RUN python3 -m pip install setuptools rdap pyyaml 
 RUN mkdir /app
 COPY . /app
-RUN cd /appp
+RUN cd /app
 RUN python3 setup.py install
 RUN mkdir /host_mounted_dir
 
