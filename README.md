@@ -63,6 +63,8 @@ Bye!
 $ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
 ```
 
+## To Run domain_stats as a service
+If you are not going to use a docker you may want to run domain_stats as a server. After installing domain_stats as described above you can set it to run as a service on your system using the provided .service file in the utils folder. Add the ["domain_stats.service"](./domain_stats/utils/domain_stats.service) file to your `/etc/systemd/system` folder.  Then use `systemctl enable domain_stats` to set it to start automatically.
 
 ## SEIM Integration:
 This varies depending upon the SEIM. The web interface is designed for your SEIM to make API calls to it.  It will respond back with a JSON responce for you it to consume.  Since many SEIM products are already configured to consume ZEEK logs another easy option is to add the ["domain_stats.zeek"](./domain_stats/utils/domain_stats.zeek) module to your zeek configuration. Check the zeek domainstats.log for "NEW" domains and check for alerts such as "YOUR-FIRST-CONTACT".
