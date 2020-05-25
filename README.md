@@ -43,6 +43,22 @@ To get a container up and running with domain_stats `docker build` passing the g
 ```
 $ docker build --tag domain_stats_image http://github.com/markbaggett/domain_stats.git
 $ docker run -it --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
+No configuration file found.
+WARNING: Database not found. domain_stats.db
+Database is out of date.  Forcing update from 1.0 to 1.3.
+|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| 100.00% FINISHED
+|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| 100.00% FINISHED
+|XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX| 100.00% FINISHED
+Folder Initialization Complete.
+Using config /host_mounted_dir/domain_stats.yaml
+Using database /host_mounted_dir/domain_stats.db
+Using cache /host_mounted_dir/domain_stats.cache
+Server is Ready. http://0.0.0.0:8000/domain.tld
+^CWeb API Disabled...              <<<< HIT CONTROL-C
+Control-C hit: Exiting server.  Please wait..
+Commiting Cache to disk...
+Bye!
+
 $ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
 ```
 
