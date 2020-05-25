@@ -15,13 +15,13 @@ $ python3 -m pip install pyyaml rdap domain_stats
 ```
 
 If you have problems remember this is early code. You might choose to install it from github instead to get the latest fixes.
-Note: pyyaml and rdap must be installed before running setup.
+Note: pyyaml and rdap must be installed before running setup. Use PIP to install domain_stats rather than running setup.py.
 
 ```
 $ python3 -m pip install pyyaml rdap
 $ git clone https://github.com/markbaggett/domain_stats
 $ cd domain_stats
-$ python3 setup.py install
+$ python3 -m pip install .
 ```
 
 Then make a directory that will be used to for storage of data and configuration files and run domain_stats.  Pass it the path to the directory you created.
@@ -34,6 +34,18 @@ $ domain_stats ./
 domain_stats should setup the directory and start listening.
 
 ![alt text](./domain_stats.gif "Installation and use")
+
+## Install as a container
+
+To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. Run docker run once with the -it option so you can see it finish its setup.  Then hit CONTROL-C and run it again with the -d option. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
+ 
+
+```
+$ docker build --tag domain_stats_image http://github.com/markbaggett/domain_stats.git
+$ docker run -it --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
+$ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
+```
+
 
 ## SEIM Integration:
 This varies depending upon the SEIM. The web interface is designed for your SEIM to make API calls to it.  It will respond back with a JSON responce for you it to consume.  Since many SEIM products are already configured to consume ZEEK logs another easy option is to add the ["domain_stats.zeek"](./domain_stats/utils/domain_stats.zeek) module to your zeek configuration. Check the zeek domainstats.log for "NEW" domains and check for alerts such as "YOUR-FIRST-CONTACT".
