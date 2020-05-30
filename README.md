@@ -196,6 +196,14 @@ log_detail: 0
 mode: rdap
 ```
 
+# RDAP vs ISC Support
+They each have their own advantages.  We will discuss them here.
+
+- RDAP works today! The ISC support engine is still in the works.
+- If you trust your ISP, and commercial and government entities that support DNS infrastructure with your DNS queries but not the ISC then RDAP will let you live in your bubble.
+- As of August 2019 RDAP ICANN requires providers support for gTLDs (Top Level: .com, .gov, etc) and not ccTLDs (country code :google.com.au, .ga.us, etc) or eTLDs (Effective TLDs: Where we register domains). You basically can't resolve those domains until ISC support is enabled.  More info on RDAP Support timelines are [HERE]('https://www.icann.org/resources/pages/rdap-background-2018-08-31-en')
+ - ISC support will support all domains and not be limited by RDAP support. 
+ - ISC will provide additional alerting on domains
 
 # ISC API Specification 
 API requests look like this
