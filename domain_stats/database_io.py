@@ -5,6 +5,7 @@ import datetime
 import pathlib
 import urllib
 import os
+from publicsuffixlist import PublicSuffixList
 
 log = logging.getLogger("domain_stats")
 
@@ -21,19 +22,9 @@ class database_stats:
         return repr
 
 def reduce_domain(domain_in):
-    parts =  domain_in.strip().split(".")
-    if len(parts)> 2: 
-        if parts[-1] not in ['com','org','net','gov','edu']:
-            if parts[-2] in ['co', 'com','ne','net','or','org','go','gov','ed','edu','ac','ad','gr','lg','mus','gouv']:
-                domain = ".".join(parts[-3:])
-            else:
-                domain = ".".join(parts[-2:])
-        else:
-            domain = ".".join(parts[-2:])
-            #print("trim top part", domain_in, domain)
-    else:
-        domain = ".".join(parts)
-    return domain.lower()
+    domain = PublicSuffixList().privatesuffix(domain_in).lower()
+    log.debug("Trimmed domain from {0} to {1}".format(domain_in,domain))
+    return domain
 
 class DomainStatsDatabase(object):
 

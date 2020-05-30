@@ -40,6 +40,7 @@ import importlib
 import subprocess
 import signal
 import argparse
+from publicsuffixlist import PublicSuffixList
 
 #import domain_stats.expiring_cache as expiring_cache
 log = logging.getLogger("domain_stats")
@@ -108,22 +109,10 @@ def setup_folder(destination_path):
         os.system('cd {0}; domain_stats_db_admin --create --update domain_stats.db'.format(destination_path))
     print("Folder Initialization Complete.")
 
-
 def reduce_domain(domain_in):
-    parts =  domain_in.strip().split(".")
-    if len(parts)> 2: 
-        if parts[-1] not in ['com','org','net','gov','edu']:
-            if parts[-2] in ['co', 'com','ne','net','or','org','go','gov','ed','edu','ac','ad','gr','lg','mus','gouv']:
-                domain = ".".join(parts[-3:])
-            else:
-                domain = ".".join(parts[-2:])
-        else:
-            domain = ".".join(parts[-2:])
-            #print("trim top part", domain_in, domain)
-    else:
-        domain = ".".join(parts)
-    log.debug("Trimmed domain from {0} to {1}".format(domain_in,domain.lower()))
-    return domain.lower()
+    domain = PublicSuffixList().privatesuffix(domain_in).lower()
+    log.debug("Trimmed domain from {0} to {1}".format(domain_in,domain))
+    return domain
 
 def json_response(web,isc,you,cat,alert):
     return json.dumps({"seen_by_web":web,"seen_by_isc":isc, "seen_by_you":you, "category":cat, "alerts":alert},default=dateconverter).encode()
