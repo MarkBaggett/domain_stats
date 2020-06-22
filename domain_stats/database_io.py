@@ -22,7 +22,13 @@ class database_stats:
         return repr
 
 def reduce_domain(domain_in):
-    domain = PublicSuffixList().privatesuffix(domain_in).lower()
+    if not PublicSuffixList().publicsuffix(domain_in,accept_unknown=False):
+        return None
+    domain = PublicSuffixList().privatesuffix(domain_in)
+    if domain:
+        domain=domain.lower()
+    else:
+        log.debug("No eTLD for {}".format(domain))
     log.debug("Trimmed domain from {0} to {1}".format(domain_in,domain))
     return domain
 
@@ -144,6 +150,9 @@ class DomainStatsDatabase(object):
                 print("\r|{0:-<50}| {1:3.2f}%".format("X"*( 50 * pos//num_recs), 100*pos/num_recs),end="")
             command, domain, web, expires = entry.strip().split(",")
             domain = reduce_domain(domain)
+            if not domain:
+                log.debug("No valied eTLD exist for {}. Skipped.".format(domain))
+                continue
             web = datetime.datetime.strptime(web, '%Y-%m-%d %H:%M:%S')
             expires = datetime.datetime.strptime(expires, '%Y-%m-%d %H:%M:%S')
             if command == "+":

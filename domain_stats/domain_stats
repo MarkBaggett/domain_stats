@@ -110,7 +110,13 @@ def setup_folder(destination_path):
     print("Folder Initialization Complete.")
 
 def reduce_domain(domain_in):
-    domain = PublicSuffixList().privatesuffix(domain_in).lower()
+    if not PublicSuffixList().publicsuffix(domain_in,accept_unknown=False):
+        return None
+    domain = PublicSuffixList().privatesuffix(domain_in)
+    if domain:
+        domain=domain.lower()
+    else:
+        log.debug("No eTLD for {}".format(domain))
     log.debug("Trimmed domain from {0} to {1}".format(domain_in,domain))
     return domain
 
@@ -122,6 +128,8 @@ def domain_stats(domain):
     log.debug("New Request for domain {0}.  Here is the cache info:{1} {2}".format(domain,cache.keys(),cache.cache_info() ))
     #First try to get it from the Memory Cache
     domain = reduce_domain(domain)
+    if not domain:
+        return json_response("ERROR","ERROR","ERROR","ERROR",['No valid eTLD exists for this domain.'])                
     cache_data = cache.get(domain)
     log.debug("Is the domain in cache? {}".format(bool(cache_data)))
     if cache_data:
@@ -232,7 +240,6 @@ class domain_api(http.server.BaseHTTPRequestHandler):
             elif domain == "showcache":
                 result = str(cache.cache_report()).encode()
             else:
-                domain = reduce_domain(domain)
                 result = domain_stats(domain) 
             self.wfile.write(result)
         else:
