@@ -82,6 +82,10 @@ class ExpiringCache(collections.OrderedDict, collections.Counter):
     def __getitem__(self, key):
         if key in self:
             expiration, read_count, data = super().__getitem__(key)
+            #If its not expired just return the data and dont track stats.
+            if (type(expiration)==datetime.datetime and (expiration < datetime.datetime.utcnow())):
+                self.stats.hit += 1
+                return data
             del self[key]
             #If it set to never expire or it is not expired then update the hit count and recreate the record.
             if (type(expiration)==int and expiration<0) or (type(expiration)==datetime.datetime and (expiration > datetime.datetime.utcnow())):
