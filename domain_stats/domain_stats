@@ -109,6 +109,7 @@ def setup_folder(destination_path):
         os.system('cd {0}; domain_stats_db_admin --create --update domain_stats.db'.format(destination_path))
     print("Folder Initialization Complete.")
 
+@functools.lru_cache(maxsize=4096)
 def reduce_domain(domain_in):
     if not PublicSuffixList().publicsuffix(domain_in,accept_unknown=False):
         return None
