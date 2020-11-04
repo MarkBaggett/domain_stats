@@ -3,3 +3,5 @@ domain_stats/__pycache__/*
 domain_stats/data/*
 dist/*
 *.egg-info
+.vscode/launch.json
+.vscode/settings.json
