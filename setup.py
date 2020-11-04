@@ -14,7 +14,7 @@ setuptools.setup(
     #scripts = ['domain_stats/domain_stats', "domain_stats/domain_stats_db_admin"],
     url="https://github.com/markbaggett/domain_stats",
     packages=setuptools.find_packages(),
-    install_requires = ['requests','pyyaml', 'rdap', 'python-dateutil>2.7','publicsuffixlist','gunicorn'],
+    install_requires = ['requests','pyyaml', 'rdap', 'python-dateutil>2.7','publicsuffixlist','flask','gunicorn'],
     include_package_data = True,
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -17,9 +17,14 @@ log = logging.getLogger("domain_stats")
 
 from publicsuffixlist import PublicSuffixList
 from domain_stats.config import Config
-from domain_stats.expiring_diskcache import cache
 from domain_stats.network_io import IscConnection
 import domain_stats.rdap_query as rdap
+
+from domain_stats.expiring_diskcache import ExpiringCache
+
+#current directory must be set by launcher to the location of the config and database
+cache = ExpiringCache(os.getcwd())
+config = Config(os.getcwd()+"/domain_stats.yaml")
 
 app = Flask(__name__)
 app.name = "domain_stats"
@@ -31,7 +36,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=10)
 def json_response(web,isc,you,cat,alert):
     return jsonify({"seen_by_web":web,"seen_by_isc":isc, "seen_by_you":you, "category":cat, "alerts":alert})
 
-@cache.cache.memoize(typed=True, tag='reduced_domain')
+@cache.cache.memoize(tag="reduce_domain")
 def reduce_domain(domain_in):
     if not PublicSuffixList().publicsuffix(domain_in,accept_unknown=False):
         return None
@@ -45,7 +50,7 @@ def reduce_domain(domain_in):
 
 @app.route("/<string:domain>", methods=['GET'])
 def get_domain(domain):
-   log.debug("New Request for domain {0}.  Here is the cache info:{1} {2}".format(domain,cache.keys(),cache.cache_info() ))
+    log.debug("New Request for domain {0}.  Here is the cache info:{1} {2}".format(domain,cache.keys(),cache.cache_info() ))
     #First try to get it from the Memory Cache
     domain = reduce_domain(domain)
     if not domain:
@@ -132,7 +137,11 @@ def config_app(working_path):
         sys.exit(1)
     yaml_path = str(working_path / "domain_stats.yaml")
     print("Using config {}".format( str(yaml_path)))
-    app.config.update(Config(str(yaml_path)))
+    app.config.update(config)
     os.chdir(working_path)
     return app
+
+if __name__ == "__main__":
+    x = config_app("/home/student/dsdata2")
+    x.run()
 
