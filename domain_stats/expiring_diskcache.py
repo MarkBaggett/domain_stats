@@ -11,17 +11,21 @@ class ExpiringCache:
     def get(self, key):
         return self.cache.get(key)
 
-    def cache_dump(self):
-        return "Not implemented"
-
-    def cache_load(self):
-        return "Not implemented"
+    def cache_dump(self, limit=100,offset=0):
+        res = []
+        for eachkey in selfcache.iterkeys():
+            if offset != 0:
+                offset -= 1
+                continue
+            res.append( self.cache.get(eachkey) )
+            if limit == 0:
+                break
+            limit -= 1
+        return res
 
     def cache_info(self):
-         return "Not Implemented"
+        hits,miss = self.cache.stats()
+        size = self.cache.volume()
+        warnings = self.cache.check(fix=True)
+        return {"hit":hits, "miss":miss, "size": size, "warnings":warnings}
 
-    def cache_report(self):
-         return "Not Implemented"
-
-    def keys(self):
-        return "Not implemented"
