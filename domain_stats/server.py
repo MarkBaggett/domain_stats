@@ -9,11 +9,11 @@ import os
 
 log = logging.getLogger("domain_stats")
 
-#default_flask_logger = logging.getLogger('werkzeug')
-#default_flask_logger.setLevel(logging.ERROR)
-#logfile = logging.FileHandler( './domain_stats.log')
-#logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(message)s')
-#logfile.setFormatter(logformat)
+default_flask_logger = logging.getLogger('werkzeug')
+default_flask_logger.setLevel(logging.DEBUG)
+logfile = logging.FileHandler( './domain_stats.log')
+logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(message)s')
+logfile.setFormatter(logformat)
 
 from publicsuffixlist import PublicSuffixList
 from domain_stats.config import Config
@@ -83,8 +83,10 @@ def get_domain(domain):
         alerts = []
         if app.config.get("enable_freq_scores"):
             freq_score = freq.probability(domain)
-            if freq_score[0] < app.config.get("freq_avg_alert") or freq_score[1] < app.config.get("freq_word_alert"):
-                alerts.append("LOW-FREQ-SCORE")
+            if freq_score[0] < app.config.get("freq_avg_alert") and freq_score[1] < app.config.get("freq_word_alert"):
+                alerts.append("LOW-FREQ-SCORES")
+            elif freq_score[0] < app.config.get("freq_avg_alert") or freq_score[1] < app.config.get("freq_word_alert"):
+                alerts.append("SUSPECT-FREQ-SCORE")
         if app.config.get("mode")=="rdap":
             alerts.append("YOUR-FIRST-CONTACT")
             rdap_seen_by_you = (datetime.datetime.utcnow()+datetime.timedelta(hours=app.config['timezone_offset']))
