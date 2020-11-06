@@ -108,19 +108,22 @@ def get_domain(domain):
                 cache.set(domain, cache_resp, hours_to_live=cache_expiration)
                 memocache.incr("rdap_fail")
                 return resp
-            category = "NEW"
             #if not expires and its doesn't expire for two years then its established.
-            age = app.config.get("established_days_age")
-            if rdap_seen_by_web < (datetime.datetime.utcnow() - datetime.timedelta(days=365*2)).replace(tzinfo=datetime.timezone.utc):
-                category = "ESTABLISHED"
+            est_day_age = app.config.get("established_days_age")
+            domain_age_seconds = (datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc) - rdap_seen_by_web).total_seconds()
+            until_expires = (rdap_expires - datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)).total_seconds()
+            if domain_age_seconds > (est_day_age *86400):
+                category = "ESTABLISHED"      
+            else:
+                category = "NEW"
+                until_established = (est_day_age * 86400) - domain_age_seconds
+                until_expires = min( until_expires, until_established )
             resp = json_response(rdap_seen_by_web, "RDAP", rdap_seen_by_you, category, alerts , freq_score )
             #Build a response just for the cache that stores ISC alerts for 24 hours. 
             if "YOUR-FIRST-CONTACT" in alerts:
                 alerts.remove("YOUR-FIRST-CONTACT")
-            until_expires = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc) - rdap_expires
-            cache_expiration = min( 720 , (until_expires.seconds//360))
             cache_response = json_response(rdap_seen_by_web, "RDAP", rdap_seen_by_you, category, alerts, freq_score )
-            cache.set(domain, cache_response, cache_expiration)
+            cache.set(domain, cache_response, until_expires)
             memocache.incr("rdap_good")
             return resp 
         else:
@@ -148,5 +151,5 @@ def config_app(working_path):
 
 if __name__ == "__main__":
     x = config_app("/home/student/dsdata2")
-    x.run()
+    x.run(host="0.0.0.0",port=5730)
 
