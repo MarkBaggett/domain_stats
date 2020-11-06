@@ -8,12 +8,9 @@ import sys
 import os
 
 log = logging.getLogger("domain_stats")
-
 default_flask_logger = logging.getLogger('werkzeug')
-default_flask_logger.setLevel(logging.DEBUG)
-logfile = logging.FileHandler( './domain_stats.log')
-logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(message)s')
-logfile.setFormatter(logformat)
+default_flask_logger.setLevel(logging.CRITICAL)
+
 
 from publicsuffixlist import PublicSuffixList
 from domain_stats.config import Config
@@ -34,6 +31,19 @@ config = Config(os.getcwd()+"/domain_stats.yaml")
 if config.get("enable_freq_scores"):
     freq = FreqCounter()
     freq.load("freqtable2018.freq")
+
+
+logfile = logging.FileHandler(str(pathlib.Path.cwd() / 'domain_stats.log'))
+logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(process)d : %(message)s')
+logfile.setFormatter(logformat)
+if config['log_detail'] == 0:
+    log.setLevel(level=logging.CRITICAL)
+elif config['log_detail'] == 1:
+    log.addHandler(logfile)
+    log.setLevel(logging.INFO)
+else:
+    log.addHandler(logfile)
+    log.setLevel(logging.DEBUG)
 
 app = Flask(__name__)
 app.name = "domain_stats"
@@ -68,7 +78,7 @@ def cache_info():
 
 @app.route("/<string:domain>", methods=['GET'])
 def get_domain(domain):
-    log.debug("New Request for domain {0}." )
+    log.debug("New Request for domain {0}.".format(domain) )
     #First try to get it from the Memory Cache
     domain = reduce_domain(domain)
     if not domain:
