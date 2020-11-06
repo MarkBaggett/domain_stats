@@ -12,11 +12,11 @@ import gunicorn
 import multiprocessing
 import os
 
-os.environ["SERVER_SOFTWARE"] = "domain_stats-0.0.8"
+os.environ["SERVER_SOFTWARE"] = "domain_stats"
 bind = "{ip}:{port}"
 workers = {cpu}
 threads = {thread}
-gunicorn.SERVER_SOFTWARE = 'domain_stats-0.0.8'
+gunicorn.SERVER_SOFTWARE = 'domain_stats'
     """
     config_file = pathlib.Path(tgt_folder / "gunicorn_config.py")
     config_file.write_text(gunicorn_config)
