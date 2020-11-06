@@ -11,23 +11,35 @@ Domain_stats is a log enhancment utility that is intended help you find threats 
 ## The Old Domain_stats support
 This version of domains_stats provides a number of benefits over the old version including performance, scalability, alerting, and isc integration. It does focus on born-on information which was the primary use of the tool and achieves its increaces performance by not processing the entire whois record. If you are looking for a copy of the old domain_stats which rendered ALL of the whois record rather than just the born-on information please let me make two suggestions.  First, that functionality has been moved to a new tool called "APIify" which can render any standard linux command in a json response for consumption. It also has improved caching and scalability over the old domain_stats. You can download [APIify HERE](https://github.com/markbaggett/apiify). You can also find the old version of domain_stats [in the releases section](https://github.com/MarkBaggett/domain_stats/releases/tag/1.0).
 
-## Ubuntu INSTALL:
+## Special Thanks
+Thanks to the following individuals for their support, suggestions and inspirations without whom this version of domain_stats would not be possible.  
+ - Justin Henderson [@securitymapper](https://twitter.com/securitymapper)
+ - Don Williams [@bashwrapper](https://twitter.com/bashwrapper)
+ - Dustin "cuz" Lee [@_dustinlee](https://twitter.com/_dustinlee)
+ - Luke Flinders [@The1WhoPrtNocks](https://twitter.com/The1WhoPrtNocks)
 
-Install it as a Python package. At a bash prompt run the following:
+## Ubuntu system preparation:
+On Ubuntu you usually have to install Python PIP first. At a bash prompt run the following:
 ```
 $ apt-get install python3-pip
-$ python3 -m pip install pyyaml rdap domain_stats
 ```
 
-Alternatively download the latest build from this github repo and install it as follows. Use PIP to install domain_stats rather than running setup.py.
+## Install published package via PIP
+```
+$ python3 -m pip install domain-stats
+```
 
+## Install from latest source via PIP
+Alternatively download the latest build from this github repo and install it as follows. Use PIP to install domain_stats rather than running setup.py.
 ```
 $ git clone https://github.com/markbaggett/domain_stats
 $ cd domain_stats
 $ python3 -m pip install .
 ```
 
-Then make a directory that will be used to for storage of data and configuration files. Next run 'domain-stats-settings' and then 'domain-stats' in that order. Both of those files require you pass it the path to your data directory. The first command 'domain-stats-settings' creates or edits the required settings files. If you are not sure how to answer the questions just press enter and allow it to create the configuration files. The second command 'domain-stats' will run the server.
+## Configure and Start
+
+One the package is installed, make a directory that will be used to for storage of data and configuration files. Then run 'domain-stats-settings' and followd by 'domain-stats'. Both of those programs require you pass it the path to your data directory. The first command 'domain-stats-settings' creates or edits the required settings files. If you are not sure how to answer the questions just press enter and allow it to create the configuration files. The second command 'domain-stats' will run the server.
 
 ```
 $ mkdir /mydata
@@ -35,7 +47,7 @@ $ domain-stats-settings /mydata
 $ domain_stats /mydata
 ```
 
-domain_stats should setup the directory and start listening.
+Here is what that looks like installed from source.
 
 ![alt text](./domain_stats.gif "Installation and use")
 
@@ -65,7 +77,7 @@ $ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:80
 ```
 
 ## To Run domain_stats as a service
-If you are not going to use a docker you may want to run domain_stats as a server. After installing domain_stats as described above you can set it to run as a service on your system using the provided .service file in the utils folder. Add the ["domain_stats.service"](./domain_stats/data/domain_stats.service) file to your `/etc/systemd/system` folder.  Then use `systemctl enable domain_stats` to set it to start automatically. It will be nessisary to edit the service file and change the "WorkingDirectory" entry so that it points to the location you are storing your data.
+If you are not going to use a docker you may want to run domain_stats as a server. After installing domain_stats as described above you can set it to run as a service on your system using the provided .service file in the data folder. It will be necessary to edit the domain_stats.service file and change the "WorkingDirectory" entry so that it points to the location you are storing your data. After editing the file add the ["domain_stats.service"](./domain_stats/data/domain_stats.service) file to your `/etc/systemd/system` folder.  Then use `systemctl enable domain_stats` to set it to start automatically. 
 
 ## SEIM Integration:
 This varies depending upon the SEIM. The web interface is designed for your SEIM to make API calls to it.  It will respond back with a JSON responce for you it to consume.  Since many SEIM products are already configured to consume ZEEK logs another easy option is to add the ["domain_stats.zeek"](./domain_stats/data/domain_stats.zeek) module to your zeek configuration. Check the zeek domainstats.log for "NEW" domains and check for alerts such as "YOUR-FIRST-CONTACT".
