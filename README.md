@@ -9,11 +9,11 @@ Domain_stats is a log enhancment utility that is intended help you find threats 
  - Domains that SANS ISC issues warning for (**Pending ISC Integration)
 
 ## The Old Domain_stats support
-This version of domains_stats provides a number of benefits over the old version including performance, scalability, alerting, and isc integration.  It does focus on born-on information which was the primary use of the tool and achieves its increaces performance by not processing the entire whois record.  If you are looking for a copy of the old domain_stats which rendered ALL of the whois record rather than just the born-on information please let me make two suggestions.  First, that functionality has been moved to a new tool called "APIify" which can render any standard linux command in a json response for consumption.  It also has improved caching and scalability over the old domain_stats.   You can download [APIify HERE](https://github.com/markbaggett/apiify).   You can also find the old version of domain_stats [in the releases section](https://github.com/MarkBaggett/domain_stats/releases/tag/1.0).
+This version of domains_stats provides a number of benefits over the old version including performance, scalability, alerting, and isc integration. It does focus on born-on information which was the primary use of the tool and achieves its increaces performance by not processing the entire whois record. If you are looking for a copy of the old domain_stats which rendered ALL of the whois record rather than just the born-on information please let me make two suggestions.  First, that functionality has been moved to a new tool called "APIify" which can render any standard linux command in a json response for consumption. It also has improved caching and scalability over the old domain_stats. You can download [APIify HERE](https://github.com/markbaggett/apiify). You can also find the old version of domain_stats [in the releases section](https://github.com/MarkBaggett/domain_stats/releases/tag/1.0).
 
 ## Ubuntu INSTALL:
 
-Install it as a Python package.  At a bash prompt run the following:
+Install it as a Python package. At a bash prompt run the following:
 ```
 $ apt-get install python3-pip
 $ python3 -m pip install pyyaml rdap domain_stats
@@ -27,7 +27,7 @@ $ cd domain_stats
 $ python3 -m pip install .
 ```
 
-Then make a directory that will be used to for storage of data and configuration files. Next run 'domain-stats-settings' and then 'domain-stats' in that order.  Both of those files require you pass it the path to your data directory.  The first command 'domain-stats-settings' creates or edits the required settings files. If you are not sure how to answer the questions just press enter and allow it to create the configuration files. The second command 'domain-stats' will run the server.
+Then make a directory that will be used to for storage of data and configuration files. Next run 'domain-stats-settings' and then 'domain-stats' in that order. Both of those files require you pass it the path to your data directory. The first command 'domain-stats-settings' creates or edits the required settings files. If you are not sure how to answer the questions just press enter and allow it to create the configuration files. The second command 'domain-stats' will run the server.
 
 ```
 $ mkdir /mydata
@@ -41,22 +41,25 @@ domain_stats should setup the directory and start listening.
 
 ## Install as a container
 
-To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 10000 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can see it initialize the download of the local database and finish the setup.  Then hit CONTROL-C and run it again with the -d and --name options as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
+To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 10000 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can go through the setup questions. If you do not know a better answer then the default just press ENTER. When it is finished run the container again with the -d and --name options as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
  
-
 ```
 $ docker build --tag domain_stats_image http://github.com/markbaggett/domain_stats.git
 $ mkdir ~/dstat_data
 $ docker run -it --rm -v ~/dstat_data:/host_mounted_dir -p 8000:10000 domain_stats_image
-
-this is all wrong
-You caught me in the middle of uploading this version.  Gotta push the update to document how to use the update or im just making stuff up.
-
-Server is Ready. http://0.0.0.0:8000/domain.tld
-^CWeb API Disabled...              <<<< HIT CONTROL-C
-Control-C hit: Exiting server.  Please wait..
-Commiting Cache to disk...
-Bye!
+Set value for ip_address. Default=0.0.0.0 Current=0.0.0.0 (Enter to keep Current): 
+Set value for local_port. Default=5730 Current=5730 (Enter to keep Current): 
+Set value for workers. Default=3 Current=3 (Enter to keep Current): 
+Set value for threads_per_worker. Default=3 Current=3 (Enter to keep Current): 
+Set value for timezone_offset. Default=0 Current=0 (Enter to keep Current): 
+Set value for established_days_age. Default=730 Current=730 (Enter to keep Current): 
+Set value for mode. Default=rdap Current=rdap (Enter to keep Current): 
+Set value for freq_table. Default=freqtable2018.freq Current=freqtable2018.freq (Enter to keep Current): 
+Set value for enable_freq_scores. Default=True Current=True (Enter to keep Current):
+Set value for freq_avg_alert. Default=5.0 Current=5.0 (Enter to keep Current): 
+Set value for freq_word_alert. Default=4.0 Current=4.0 (Enter to keep Current): 
+Set value for log_detail. Default=0 Current=0 (Enter to keep Current): 
+Commit Changes to disk?y
 
 $ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
 ```
@@ -108,7 +111,7 @@ If your SIEM sees a request for google.com that is not a new domain and has been
 student@573:~/Documents/domain_stats2$ wget -q -O- http://127.0.0.1:8000/google.com
 {"seen_by_web": "1998-10-08 07:30:02", "seen_by_isc": "NA", "seen_by_you": "2019-12-24 15:30:02", "category": "ESTABLISHED", "alerts": ['YOUR-FIRST-CONTACT']}
 ```
-When the domain has been around for more than two years domain stats responds and tells you that is an "ESTABLISHED" domain.  Notice that ALERTS is set to "YOUR-FIRST-CONTACT". Since this is a brand new domain stats installation this is the first time my organization has ever queried google.  You will only see "YOUR-FIRST-CONTACT" once for each domain. Also "SEEN_BY_ISC" is set to NA indicating that this query was resolved locally by your domain client and it didn't need to talk to the ISC.  That means that this is a well known established domain that has been around for a long time and your local client has it in its database.  Generally speaking you can most likely ignore the NA SEEN_BY_ISC domains.
+When the domain has been around for more than two years domain stats responds and tells you that is an "ESTABLISHED" domain. Notice that ALERTS is set to "YOUR-FIRST-CONTACT". Since this is a brand new domain stats installation this is the first time my organization has ever queried google. You will only see "YOUR-FIRST-CONTACT" once for each domain. Also "SEEN_BY_ISC" is set to NA indicating that this query was resolved locally by your domain client and it didn't need to talk to the ISC. That means that this is a well known established domain that has been around for a long time and your local client has it in its database. Generally speaking you can most likely ignore the NA SEEN_BY_ISC domains.
  
 Lets look at another domain.  Look at markbaggett.com.
 
@@ -116,7 +119,7 @@ Lets look at another domain.  Look at markbaggett.com.
 student@573:~/Documents/domain_stats2$ wget -q -O- http://127.0.0.1:8000/markbaggett.com
 {"seen_by_web": "2015-12-12 19:34:59", "seen_by_isc": "2019-06-08 10:03:17", "seen_by_you":"2019-06-08 10:03:17", "category": "ESTABLISHED", "alerts": ['YOUR-FIRST-CONTACT'] 
 ```
-The domain markbaggett.com wasn't in the local database on my server so it had to go off and ask the SANS Internet Storm Center server for that information. It got back a "seen_by_web" date of 12-12-2015.  This is the domains registration date. The category indicates that this is an "ESTABLISHED" domain.  It will added to the client database for all future queries unless any additional alerts were set by the ISC. Domains that have an alert associated with them will be cached for 24 hours. Then another query will be sent to the ISC.  This process is repeated until the isc alert for that domain is cleared.  Notice there is a date for "seen_by_isc".  That is the first time ANYONE using domain_stats queried the central server for that domain. Someone using domain stats ask about that domain that back on July 8th. That is a few months ago so it isn't brand new to the community. If no one using domain stats had ever asked about that domain there would have been an additional alert that says "ISC-FIRST-CONTACT". Last we can see it is again the YOUR-FIRST-CONTACT alert for our organization.   
+The domain markbaggett.com wasn't in the local database on my server so it had to go off and ask the SANS Internet Storm Center server for that information. It got back a "seen_by_web" date of 12-12-2015. This is the domains registration date. The category indicates that this is an "ESTABLISHED" domain. It will added to the client database for all future queries unless any additional alerts were set by the ISC. Domains that have an alert associated with them will be cached for 24 hours. Then another query will be sent to the ISC.  This process is repeated until the isc alert for that domain is cleared. Notice there is a date for "seen_by_isc". That is the first time ANYONE using domain_stats queried the central server for that domain. Someone using domain stats ask about that domain that back on July 8th. That is a few months ago so it isn't brand new to the community. If no one using domain stats had ever asked about that domain there would have been an additional alert that says "ISC-FIRST-CONTACT". Last we can see it is again the YOUR-FIRST-CONTACT alert for our organization.   
 
 A domain with a very recent "seen_by_web", "seen_by_isc" and "seen_by_you" date should be investigated. The vast majority of domains have been around for a few years before they are stable and gain popularity.  Domains used by attackers are usually established shortly before they are used. 
 
@@ -269,98 +272,3 @@ RESPONSES (two possible):
    - -1 - will cache it such that it does not expire, but the domain can still drop out of cache based on LRU algorithm
    - -2 - PERMANENT cache entry.  Will never expire.  DANGEROUS. Use with caution.
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Here are some quick multiprocessing installation instructions.
-
-
-If you want to do this in a python virtual environment create one and activate it.
-
-```
-student@573:~$ python -m venv ~/venvs/onetimerun/
-student@573:~$ source ~/venvs/onetimerun/bin/activate
-(onetimerun) student@573:~$
-```
-
-Next install the program
-
-```
-(onetimerun) student@573:~$ git clone --single-branch --branch multiprocessed http://github.com/markbaggett/domain_stats
-Cloning into 'domain_stats'...
-warning: redirecting to https://github.com/markbaggett/domain_stats/
-remote: Enumerating objects: 47, done.
-remote: Counting objects: 100% (47/47), done.
-remote: Compressing objects: 100% (32/32), done.
-remote: Total 463 (delta 23), reused 37 (delta 15), pack-reused 416
-Receiving objects: 100% (463/463), 12.55 MiB | 15.56 MiB/s, done.
-Resolving deltas: 100% (247/247), done.
-
-(test_multiprocess) student@573:~/test$ cd domain_stats/
-(onetimerun) student@573:~/domain_stats$ pip install .
-Processing /home/student/domain_stats
-
-Output Truncaded.  Dont worry about any errors such as..
-
-  error: invalid command 'bdist_wheel'
-  Failed building wheel for pyyaml
-
-as long as you see this Success at the end
-
-Successfully installed Jinja2-2.11.2 MarkupSafe-1.1.1 Werkzeug-1.0.1 certifi-2020.6.20 chardet-3.0.4 click-7.1.2 diskcache-5.0.3 domain-stats-0.0.1 flask-1.1.2 gunicorn-20.0.4 idna-2.10 itsdangerous-1.1.0 munge-1.1.0 publicsuffixlist-0.7.5 python-dateutil-2.8.1 pyyaml-5.3.1 rdap-1.1.0 requests-2.24.0 six-1.15.0 urllib3-1.25.11
-```
-
-Next run domain-stats-settings and give it the path to store your data. Answer the questions if you don't know a better answer then just press enter. Dont forget to say "YES" to commit your settings to the disk.  If you want to change these just rerun settings.
-
-```
-(onetimerun) student@573:~/domain_stats$ mkdir /home/student/ds1
-(onetimerun) student@573:~/domain_stats$ domain-stats-settings /home/student/ds1
-Set value for ip_address. Default=0.0.0.0 Current=0.0.0.0 (Enter to keep Current): 
-Set value for local_port. Default=5730 Current=5730 (Enter to keep Current): 
-Set value for workers. Default=3 Current=3 (Enter to keep Current): 
-Set value for threads_per_worker. Default=3 Current=3 (Enter to keep Current): 
-Set value for timezone_offset. Default=0 Current=0 (Enter to keep Current): 
-Set value for established_days_age. Default=730 Current=730 (Enter to keep Current): 
-Set value for enable_freq_scores. Default=True Current=True (Enter to keep Current): 
-Set value for mode. Default=rdap Current=rdap (Enter to keep Current): 
-Set value for freq_avg_alert. Default=5.0 Current=5.0 (Enter to keep Current): 
-Set value for freq_word_alert. Default=4.0 Current=4.0 (Enter to keep Current): 
-Set value for log_detail. Default=0 Current=0 (Enter to keep Current): 
-Commit Changes to disk?y
-```
-
-Last run domain stats.  Again you must pass the path to the data location.
-
-```
-(onetimerun) student@573:~/domain_stats$ domain-stats /home/student/ds1
-Existing config found in directory. Using it.
-[2020-11-05 15:34:45 -0800] [26382] [INFO] Starting gunicorn 20.0.4
-[2020-11-05 15:34:45 -0800] [26382] [INFO] Listening at: http://0.0.0.0:5730 (26382)
-[2020-11-05 15:34:45 -0800] [26382] [INFO] Using worker: threads
-[2020-11-05 15:34:45 -0800] [26385] [INFO] Booting worker with pid: 26385
-[2020-11-05 15:34:45 -0800] [26386] [INFO] Booting worker with pid: 26386
-[2020-11-05 15:34:45 -0800] [26387] [INFO] Booting worker with pid: 26387
-Using config /home/student/ds1/domain_stats.yaml
-Using config /home/student/ds1/domain_stats.yaml
-Using config /home/student/ds1/domain_stats.yaml
-```
