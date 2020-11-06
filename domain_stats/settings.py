@@ -24,7 +24,7 @@ gunicorn.SERVER_SOFTWARE = 'domain_stats-0.0.8'
 def update_setting(config, key, default):
     current_val = config.get(key,default)
     new_val = input(f"Set value for {key}. Default={default} Current={current_val} (Enter to keep Current): ") or current_val
-    config[key]= new_val    
+    config[key]= default.__class__(new_val)    
 
 def setup_directory(tgt_folder):
     config = {}
