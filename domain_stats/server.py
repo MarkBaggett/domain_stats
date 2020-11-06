@@ -30,8 +30,7 @@ config = Config(os.getcwd()+"/domain_stats.yaml")
 
 if config.get("enable_freq_scores"):
     freq = FreqCounter()
-    freq.load("freqtable2018.freq")
-
+    freq.load(config.get("freq_table"))
 
 logfile = logging.FileHandler(str(pathlib.Path.cwd() / 'domain_stats.log'))
 logformat = logging.Formatter('%(asctime)s : %(levelname)s : %(module)s : %(process)d : %(message)s')

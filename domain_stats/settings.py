@@ -48,8 +48,9 @@ def setup_directory(tgt_folder):
     #Configure Additional settings in domain_stats.yaml
     update_setting(config,'timezone_offset', 0)
     update_setting(config,'established_days_age', 730)
-    update_setting(config,'enable_freq_scores', True)
     update_setting(config,'mode',"rdap")
+    update_setting(config,'freq_table', 'freqtable2018.freq')
+    update_setting(config,'enable_freq_scores', True)
     update_setting(config,'freq_avg_alert',5.0)
     update_setting(config,'freq_word_alert',4.0)
     update_setting(config,'log_detail',0)
