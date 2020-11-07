@@ -98,116 +98,92 @@ Assuming that zeek is installed in `/opt/zeek` and you don't already have custom
 
 ## Using domain_stats
 
-This is a complete rewrite and new approach to managing baby domains in your organization.  Based on feedback from the community Domain_stats was really only used for baby domain information.  This new iteration focuses on that data and how to make it useful.  In this process it now tracks "FIRST CONTACT" so you know when your organization and/or the ISC has seen that domain before.
+When LogStash or any other system makes a web request to the system it returns back data relevant to the domain queried.
 
-The domain stats client is focused on quickly giving you 5 pieces of data for every domain name you ask it for.  That is when the domain was first seen by you, when it was first seen by the security community and when it was first seen by the web.
+The request is in the form ```http://ip:port/domain```  For example:
+```
+$ wget -q -O- http://127.0.0.1:5730/sans.org
+{"alerts":["YOUR-FIRST-CONTACT"],"category":"ESTABLISHED","freq_score":[6.2885,7.9696],"seen_by_isc":"RDAP","seen_by_web":"Fri, 04 Aug 1995 04:00:00 GMT","seen_by_you":"Sat, 07 Nov 2020 17:19:49 GMT"}
+```
 
-SEEN_BY_YOU - Values: Date First Seen by you
+#### Here is what the response fields mean
 
-SEEN_BY_ISC  - Values: NA or Date First seen by ISC  (NA indicates that it was resolved by the local database no ISC is required.)
+ - alerts - A list of alarms associated with the domain queried.  This can include
+   * YOUR-FIRST-CONTACT   - This is the first time you have every queried this domain
+   * SUSPECT-FREQ-SCORE   - One of the two freq scores is low
+   * LOW-FREQ-SCORE       - Both of the freq scores are low
+   * Other                - Other alerts may be added with ISC integration
 
-SEEN_BY_WEB - Values: CreationDate
+ - SEEN_BY_YOU - This is the date this domain was first seen by you
 
-CATEGORY    - NEW or ESTABLISHED  (indicating whether it is less than 2 years old since the SEEN_BY_WEB date)
+ - SEEN_BY_ISC  - This may be one of a few possible values
+   * RDAP      - When in RDAP mode this will contain the word RDAP
+   * datetime  - When in ISC mode this will contain the date and time when the domain was first seen by the ISC
+   
+ - SEEN_BY_WEB - This is the date when the domain was first seen on the internet (ie the registration date)
 
-ALERT      -  List of alerts regarding this domain.   Including:
-              YOUR-FIRST-CONTACT  - This request is first time you have ever seen this domain on your network
-              ISC-FIRST-CONTACT  - This is the first time any domain_stats user has seen this domain on their network
-              <other>  - The ISC may add other alert for a domain 
+ - CATEGORY    - This can be one of two possible values
+   * NEW         - The registration date is less than the configured "established_days_age" (Default is two years)
+   * ESTABLISHED - The domain is more than "established_days_age" days old
 
+ - freq_score  - This contains two values measuring the "normalness" of the domain letters. If these numbers are below the thresholds established in the settings it will generate alerts.
 
-Here are some examples of how these are useful.
-If your SIEM sees a request for google.com that is not a new domain and has been established for may years. Your response may look like this:
-
-```
-student@573:~/Documents/domain_stats2$ wget -q -O- http://127.0.0.1:8000/google.com
-{"seen_by_web": "1998-10-08 07:30:02", "seen_by_isc": "NA", "seen_by_you": "2019-12-24 15:30:02", "category": "ESTABLISHED", "alerts": ['YOUR-FIRST-CONTACT']}
-```
-When the domain has been around for more than two years domain stats responds and tells you that is an "ESTABLISHED" domain. Notice that ALERTS is set to "YOUR-FIRST-CONTACT". Since this is a brand new domain stats installation this is the first time my organization has ever queried google. You will only see "YOUR-FIRST-CONTACT" once for each domain. Also "SEEN_BY_ISC" is set to NA indicating that this query was resolved locally by your domain client and it didn't need to talk to the ISC. That means that this is a well known established domain that has been around for a long time and your local client has it in its database. Generally speaking you can most likely ignore the NA SEEN_BY_ISC domains.
- 
-Lets look at another domain.  Look at markbaggett.com.
+#### In addition to requesting a domain the following urls can be used to check on your server.
 
 ```
-student@573:~/Documents/domain_stats2$ wget -q -O- http://127.0.0.1:8000/markbaggett.com
-{"seen_by_web": "2015-12-12 19:34:59", "seen_by_isc": "2019-06-08 10:03:17", "seen_by_you":"2019-06-08 10:03:17", "category": "ESTABLISHED", "alerts": ['YOUR-FIRST-CONTACT'] 
+$ wget -q -O- http://127.0.0.1:5730/stats  
 ```
-The domain markbaggett.com wasn't in the local database on my server so it had to go off and ask the SANS Internet Storm Center server for that information. It got back a "seen_by_web" date of 12-12-2015. This is the domains registration date. The category indicates that this is an "ESTABLISHED" domain. It will added to the client database for all future queries unless any additional alerts were set by the ISC. Domains that have an alert associated with them will be cached for 24 hours. Then another query will be sent to the ISC.  This process is repeated until the isc alert for that domain is cleared. Notice there is a date for "seen_by_isc". That is the first time ANYONE using domain_stats queried the central server for that domain. Someone using domain stats ask about that domain that back on July 8th. That is a few months ago so it isn't brand new to the community. If no one using domain stats had ever asked about that domain there would have been an additional alert that says "ISC-FIRST-CONTACT". Last we can see it is again the YOUR-FIRST-CONTACT alert for our organization.   
+This will show statistics on the efficiency of the cache and rdap. This also runs a consistency check on the database and repairs any issues.  The database is locked while this is running so don't constantly hit this url.
 
-A domain with a very recent "seen_by_web", "seen_by_isc" and "seen_by_you" date should be investigated. The vast majority of domains have been around for a few years before they are stable and gain popularity.  Domains used by attackers are usually established shortly before they are used. 
+```
+$ wget -q -O- http://127.0.0.1:5730/stats-reset  
+```
+Resets the RDAP failure and success
 
-Anytime you see a "???-FIRST-CONTACT" on a domain that has been running for some period of time it is at the least a good thing to be aware of.  If it is the FIRST CONTACT for both you and the community then that is even more interesting. (Unless of course you are of the few beta testers where the community is very small and not much different that seen_by_you.)
+```
+$ wget -q -O- http://127.0.0.1:5730/cache_get?domain=python.org
+```
+This will retrieve the record from the cache if it exists.
+
+```
+$ wget -q -O- http://127.0.0.1:5730/cache_browse?offset=1&limit=100
+```
+This will retrieve the first 100 record from the cache and display them.  Adjust offset and limit to see others.
 
 
-![Overview](overview.jpg)
+## Configuration
+To change the settings run the tool <domain-stats-settings> and pass it the path where your data is stored.
 
+```
+$ domain-stats-settings /home/student/mydata
+Existing config found in directory. Using it.
+Set value for ip_address. Default=0.0.0.0 Current=0.0.0.0 (Enter to keep Current): 
+Set value for local_port. Default=5730 Current=5730 (Enter to keep Current): 
+Set value for workers. Default=3 Current=1 (Enter to keep Current): 
+Set value for threads_per_worker. Default=3 Current=3 (Enter to keep Current): 
+Set value for timezone_offset. Default=0 Current=0 (Enter to keep Current): 
+Set value for established_days_age. Default=730 Current=730 (Enter to keep Current): 
+Set value for mode. Default=rdap Current=rdap (Enter to keep Current): 
+Set value for rdap_error_ttl_days. Default=7 Current=7 (Enter to keep Current): 
+Set value for freq_table. Default=freqtable2018.freq Current=freqtable2018.freq (Enter to keep Current): 
+Set value for enable_freq_scores. Default=True Current=True (Enter to keep Current): 
+Set value for freq_avg_alert. Default=5.0 Current=5.0 (Enter to keep Current): 
+Set value for freq_word_alert. Default=4.0 Current=4.0 (Enter to keep Current): 
+Set value for log_detail. Default=0 Current=3 (Enter to keep Current): 
+Set value for cache_browse_limit. Default=100 Current=100 (Enter to keep Current): 
+Commit Changes to disk?y
+```
+I think most of these are self explainatory.  Here is a description of the ones that are not or require some discussion.
+ - ip_address - You listen on this ip.  127.0.0.1 is safer than 0.0.0.0.  Otherwise unauthenticated anyone on your network can see the dns cache for your enterprise. IPTABLES is nice.
+ - mode - 'rdap' is all that works right now.
+ - timezone_offset - If set, this is only used on the "seen_by_you" date.  By default all times are UTC.
+ - rdap_error_ttl_days - RDAP errors are cached are cached for a short period of time for performance.  By default it is 7 days.
+ - established_days_age - Defines how long before a domain is considered established.  Default is two years.
+ - freq_table - If you created custom freq tables you can select them here.  They should be stored in your data directory.
+ - enable_freq_scores - If you don't want freq scores, disabling them can enhance your server performance
+ - log_detail - Logging will significantly impact performance.  Id suggest leaving it disabled unless you are diagnosing an issue.
+ - cache_browse_limit - Limit the max number of records that someone can request with http://ip:port/cache_browse?offset=0&limit=9999999999999
 
-The goal is to push as much of the "ESTABLISHED" data to the client local lan as possible. This minimizes network traffic keeps as much data as possible on the client network. When contacting the central server it will periodically inform the client to pull list of new domains and add them to the client established database.
-
-The domain_stats.yaml file has many useful configurations includeing the "mode".  For now it is in "rdap" mode by default.  Which means instead of going to the ISC for domains it will do RDAP queries.  This is a useful stop gap measure but lacks the additional alerting providing by the ISC.
-
-More data to come later as features and functions are more firmly established.
-
-You can check the efficiency of your domain_stats server cache with the following request.
-
-$ wget -q -O- http://127.0.0.1:8000/stats
-Will show statistics on the efficiency of the memory cache and the database hit rate.
-
-$ wget -q -O- http://127.0.0.1:8000/showcache
-Will dump the cache
-
-# Configuration
-
-domain_stats behavior can be changed my modifying domain_stats.yaml that is in its setup directory.  In that file you will find the following useful items.
-
-- You can adjust the maximum number of items domain stats will keep in memory cache with cached_max_items. Each record consumes 32 bytes so 65536 assumes you can spare about 2MB of memory for the cache. For performance reasons this number should be a power of 2.
-```
-cached_max_items: 65536
-```
-- You can specify the name of the database with database_file.
-```
-database_file: domain_stats.db
-```
-- What IP address do you want domain stats to listen on? 0.0.0.0 means all public and private IP addresses. You should change this to 127.0.0.1 if you run domain_stats on the same server that is doing the request to the API.
-```
-local_address: 0.0.0.0
-```
-- Set which TCP port do you want the server to listen on with local_port
-```
-local_port: 8000
-```
-- The name of the file where you want to store the memory cache on disk when the tool exists. Keep this in a SECURE location.
-```
-memory_cache: domain_stats.cache
-```
-- The prohibited_tlds is a section that lists top level domains that will not be sent to the central server for resolution. List each domain beneith the word "prohibited_tlds" (Yes i know they are not TLDS) with a **dash space** in front of them.
-```
-prohibited_tlds:
-- yourdomainhere.local
-```
-- server_name is the hostname of the central domain stats server use to lookup host that are not in the database when in isc mode
-```
-server_name: domain_stats.isc.sans.edu
-```
-- This is the tcp port the central isc domain stats server
-```
-server_port: 4100
-```
-- Where to get new domain expiration data from when domain_stats_db_admin -u is run
-```
-target_updates: https://raw.githubusercontent.com/MarkBaggett/domain_stats/master/data
-```
-- ALL timestamps are UTC if you want "seen_my_you" to be in your local timezone make that adjustment here. Example EST=-5 EDT=-4, etc.  The server does not change this value automatically during daylight savings time.
-```
-timezone_offset: 0
-```
-- Control the amount of data logged with log_detail.  0=off, 1=on, 2=debug
-```
-log_detail: 0
-```
-- Mode can be isc or rdap. rdap is local resolution with no community data. isc has the good stuff.
-```
-mode: rdap
-```
 
 # RDAP vs ISC Support
 They each have their own advantages.  We will discuss them here.
