@@ -28,6 +28,8 @@ class ExpiringCache:
 
     def cache_get(self,key):
         val, expires = self.cache.get(key, expire_time=True)
+        if not val:
+            return {"text":"That domain is not in the database."}
         exp_date = datetime.datetime.fromtimestamp(expires)
         res = {"domain":key,"cache_value": val.get_json() ,"cache_expires":exp_date} 
         return res
