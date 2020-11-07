@@ -39,7 +39,7 @@ def setup_directory(tgt_folder):
     if not (tgt_folder / "freqtable2018.freq").is_file():
         shutil.copy(source_folder / "data/freqtable2018.freq", tgt_folder)
     #create gunicorn config
-    update_setting(config, "ip_address", "0.0.0.0")
+    update_setting(config, "ip_address", "127.0.0.1")
     update_setting(config, "local_port", "5730")
     rec_workers = multiprocessing.cpu_count() * 2 + 1
     update_setting(config, "workers", rec_workers)
