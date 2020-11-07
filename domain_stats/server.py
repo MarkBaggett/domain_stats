@@ -75,6 +75,29 @@ def cache_info():
     res.update({ "rdap_good":memocache.get("rdap_good"), "rdap_fail": memocache.get("rdap_fail")})
     return jsonify(res)
 
+@app.route("/stats-reset", methods=['GET'])
+def cache_reset():
+    cache.cache.stats(enable=True, reset=True)
+    memocache.set("rdap_good",0)
+    memocache.set("rdap_fail",0)
+    return jsonify({"text":"Success"})
+
+@app.route("/cache_browse", methods=['GET'])
+def cache_browse():
+    offset = request.args.get('offset',0, type=int)
+    limit = request.args.get('limit',100, type=int)
+    max_limit = min( limit, app.config.get("cache_browse_limit",100))
+    resp = cache.cache_dump(offset,max_limit)
+    return jsonify(resp)
+
+@app.route("/cache_get", methods=['GET'])
+def cache_get():
+    domain = request.args.get('domain')
+    if not domain:
+        return jsonify({"text":"Try /cache_get?domain=markbaggett.com"})
+    resp = cache.cache_get(domain)
+    return jsonify(resp)
+
 @app.route("/<string:domain>", methods=['GET'])
 def get_domain(domain):
     log.debug("New Request for domain {0}.".format(domain) )
@@ -101,33 +124,37 @@ def get_domain(domain):
             rdap_seen_by_you = (datetime.datetime.utcnow()+datetime.timedelta(hours=app.config['timezone_offset']))
             rdap_seen_by_web, rdap_expires, rdap_error = rdap.get_domain_record(domain)
             if rdap_error:
-                cache_expiration = 1
+                cache_expiration = app.config.get("rdap_error_ttl_days",7) * 86400
                 alerts.append(rdap_error)
-                resp = json_response("ERROR","ERROR","ERROR","ERROR",alerts,"ERROR")
-                cache_resp = json_response("ERROR","ERROR","ERROR","ERROR",[rdap_error],"ERROR")
-                cache.set(domain, cache_resp, hours_to_live=cache_expiration)
+                resp = json_response("ERROR","ERROR","ERROR","ERROR",alerts,freq_score)
+                if "YOUR-FIRST-CONTACT" in alerts:
+                    alerts.remove("YOUR-FIRST-CONTACT")
+                cache_resp = json_response("ERROR","ERROR","ERROR","ERROR",alerts, freq_score)
+                cache.set(domain, cache_resp, seconds_to_live=cache_expiration)
                 memocache.incr("rdap_fail")
+                log.debug("rdap failed for domain {0}. Cached {1} seconds.".format(domain,cache_expiration) )
                 return resp
             #if not expires and its doesn't expire for two years then its established.
-            est_day_age = app.config.get("established_days_age")
+            est_day_age = app.config.get("established_days_age",720)
             domain_age_seconds = (datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc) - rdap_seen_by_web).total_seconds()
             until_expires = (rdap_expires - datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)).total_seconds()
             if domain_age_seconds > (est_day_age *86400):
                 category = "ESTABLISHED"      
             else:
                 category = "NEW"
+                #It stays in the cache until it becomes established or it expires
                 until_established = (est_day_age * 86400) - domain_age_seconds
                 until_expires = min( until_expires, until_established )
             resp = json_response(rdap_seen_by_web, "RDAP", rdap_seen_by_you, category, alerts , freq_score )
-            #Build a response just for the cache that stores ISC alerts for 24 hours. 
             if "YOUR-FIRST-CONTACT" in alerts:
                 alerts.remove("YOUR-FIRST-CONTACT")
             cache_response = json_response(rdap_seen_by_web, "RDAP", rdap_seen_by_you, category, alerts, freq_score )
             cache.set(domain, cache_response, until_expires)
             memocache.incr("rdap_good")
+            log.debug("rdap success for domain {0}.Expires {1}.Cached {2} {3}".format(domain,rdap_expires,until_expires,category) )
             return resp 
         else:
-            #Instead of RDAP ask SANS ISC for domain data
+            #Mode is not RDAP ask SANS ISC for domain data
             return "ISC Mode is still in development"
          
 
@@ -150,6 +177,6 @@ def config_app(working_path):
     return app
 
 if __name__ == "__main__":
-    x = config_app("/home/student/dsdata2")
+    x = config_app("/home/student/mydata")
     x.run(host="0.0.0.0",port=5730)
 
