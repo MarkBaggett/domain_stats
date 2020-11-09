@@ -20,6 +20,8 @@ from domain_stats.freq import FreqCounter
 from domain_stats.expiring_diskcache import ExpiringCache
 from diskcache import Cache
 
+os.chdir("/home/student/mydata")
+
 #current directory must be set by launcher to the location of the config and database
 cache = ExpiringCache(os.getcwd())
 memocache = Cache(pathlib.Path().cwd() / "memocache")
@@ -88,6 +90,8 @@ def cache_browse():
     limit = request.args.get('limit',100, type=int)
     max_limit = min( limit, app.config.get("cache_browse_limit",100))
     resp = cache.cache_dump(offset,max_limit)
+    if len(resp) >= limit:
+        resp.insert(0, {"next":f"{request.base_url}?offset={offset+limit}&limit={limit}"})
     return jsonify(resp)
 
 @app.route("/cache_get", methods=['GET'])
@@ -101,15 +105,16 @@ def cache_get():
 @app.route("/<string:domain>", methods=['GET'])
 def get_domain(domain):
     log.debug("New Request for domain {0}.".format(domain) )
-    #First try to get it from the Memory Cache
+    #Reduce the domain and produce an error if it can't be reduced
     domain = reduce_domain(domain)
     if not domain:
         return json_response("ERROR","ERROR","ERROR","ERROR",['No valid eTLD exists for this domain.'],'ERROR')                
+    #retreive value from cache and serve it without modification
     cache_data = cache.get(domain)
     log.debug("Is the domain in cache? {}".format(bool(cache_data)))
     if cache_data:
         return cache_data
-    #If it isn't in the memory cache check the database
+    #Not in cache so build a new record, return it an store it in cache
     else:
         freq_score = "disabled"
         alerts = []
@@ -131,13 +136,15 @@ def get_domain(domain):
                     alerts.remove("YOUR-FIRST-CONTACT")
                 cache_resp = json_response("ERROR","ERROR","ERROR","ERROR",alerts, freq_score)
                 cache.set(domain, cache_resp, seconds_to_live=cache_expiration)
-                memocache.incr("rdap_fail")
+                if app.config.get("count_rdap_errors",False):
+                    memocache.incr("rdap_fail")
                 log.debug("rdap failed for domain {0}. Cached {1} seconds.".format(domain,cache_expiration) )
                 return resp
             #if not expires and its doesn't expire for two years then its established.
             est_day_age = app.config.get("established_days_age",720)
-            domain_age_seconds = (datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc) - rdap_seen_by_web).total_seconds()
-            until_expires = (rdap_expires - datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)).total_seconds()
+            now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+            domain_age_seconds = (now - rdap_seen_by_web).total_seconds()
+            until_expires = (rdap_expires - now).total_seconds()
             if domain_age_seconds > (est_day_age *86400):
                 category = "ESTABLISHED"      
             else:
@@ -150,7 +157,8 @@ def get_domain(domain):
                 alerts.remove("YOUR-FIRST-CONTACT")
             cache_response = json_response(rdap_seen_by_web, "RDAP", rdap_seen_by_you, category, alerts, freq_score )
             cache.set(domain, cache_response, until_expires)
-            memocache.incr("rdap_good")
+            if app.config.get("count_rdap_errors",False):
+                memocache.incr("rdap_good")
             log.debug("rdap success for domain {0}.Expires {1}.Cached {2} {3}".format(domain,rdap_expires,until_expires,category) )
             return resp 
         else:
@@ -177,6 +185,7 @@ def config_app(working_path):
     return app
 
 if __name__ == "__main__":
+    os.chdir("/home/student/mydata")
     x = config_app("/home/student/mydata")
     x.run(host="0.0.0.0",port=5730)
 

@@ -4,10 +4,11 @@ import datetime
 class ExpiringCache:
 
     def __init__(self, cache_path):
+        __slots__ = ["cache"]
         self.cache = FanoutCache(directory=cache_path, timeout=2, retry=True)
 
     def set(self, domain, domain_record, seconds_to_live, tag=None): 
-        self.cache.set(domain, domain_record, expire = seconds_to_live, tag=tag)
+        self.cache.set(domain, domain_record.json, expire = seconds_to_live, tag=tag)
 
     def get(self, key):
         return self.cache.get(key)
@@ -22,7 +23,7 @@ class ExpiringCache:
                 break
             val, expires = self.cache.get(eachkey, expire_time=True)
             exp_date = datetime.datetime.fromtimestamp(expires)
-            res.append( {"domain":eachkey,"cache_value": val.get_json() ,"cache_expires":exp_date} )
+            res.append( {"domain":eachkey,"cache_value": val ,"cache_expires":exp_date} )
             limit -= 1
         return res
 
@@ -31,7 +32,7 @@ class ExpiringCache:
         if not val:
             return {"text":"That domain is not in the database."}
         exp_date = datetime.datetime.fromtimestamp(expires)
-        res = {"domain":key,"cache_value": val.get_json() ,"cache_expires":exp_date} 
+        res = {"domain":key,"cache_value": val ,"cache_expires":exp_date} 
         return res
 
     def cache_info(self):

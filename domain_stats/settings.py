@@ -55,6 +55,7 @@ def setup_directory(tgt_folder):
     update_setting(config,'freq_avg_alert',5.0)
     update_setting(config,'freq_word_alert',4.0)
     update_setting(config,'log_detail',0)
+    update_setting(config,'count_rdap_errors',False)
     update_setting(config,'cache_browse_limit',100)
     if input("Commit Changes to disk?").lower().startswith("y"):
         create_gunicorn_config(tgt_folder, config['ip_address'], config['local_port'],config['workers'], config['threads_per_worker'])
