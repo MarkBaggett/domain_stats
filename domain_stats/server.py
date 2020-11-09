@@ -20,7 +20,6 @@ from domain_stats.freq import FreqCounter
 from domain_stats.expiring_diskcache import ExpiringCache
 from diskcache import Cache
 
-os.chdir("/home/student/mydata")
 
 #current directory must be set by launcher to the location of the config and database
 cache = ExpiringCache(os.getcwd())
