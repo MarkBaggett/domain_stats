@@ -23,7 +23,8 @@ setuptools.setup(
     python_requires='>=3.6',
     entry_points = {
         'console_scripts': ['domain-stats=domain_stats.launch:main',
-                            'domain-stats-settings=domain_stats.settings:main'],
+                            'domain-stats-settings=domain_stats.settings:main',
+                            'domain-stats-utils=domain_stats.utils:main'],
     },
     package_data={'domain_stats': ['data/*.*']}
 )
