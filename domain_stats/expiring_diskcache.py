@@ -22,7 +22,10 @@ class ExpiringCache:
             if limit == 0:
                 break
             val, expires = self.cache.get(eachkey, expire_time=True)
-            exp_date = datetime.datetime.fromtimestamp(expires)
+            if expires:
+                exp_date = datetime.datetime.fromtimestamp(expires)
+            else:
+                exp_date = "Never"
             res.append( {"domain":eachkey,"cache_value": val ,"cache_expires":exp_date} )
             limit -= 1
         return res
@@ -31,7 +34,10 @@ class ExpiringCache:
         val, expires = self.cache.get(key, expire_time=True)
         if not val:
             return {"text":"That domain is not in the database."}
-        exp_date = datetime.datetime.fromtimestamp(expires)
+        if expires:
+            exp_date = datetime.datetime.fromtimestamp(expires)
+        else:
+            exp_date = "Never"
         res = {"domain":key,"cache_value": val ,"cache_expires":exp_date} 
         return res
 
