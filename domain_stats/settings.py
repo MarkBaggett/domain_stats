@@ -61,6 +61,10 @@ def setup_directory(tgt_folder):
         create_gunicorn_config(tgt_folder, config['ip_address'], config['local_port'],config['workers'], config['threads_per_worker'])
         with file_path.open('w') as fp:
             yaml.dump(config, fp, default_flow_style=False)
+        print("Configuration Written.")
+        print("If this is a new installation you might consider preloading the top1m.import file with domain-stats-utils.")
+    else:
+        print("The configuration selected was not saved.")
 
 def main():
     if len(sys.argv) != 2:
