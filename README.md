@@ -51,6 +51,18 @@ Here is what that looks like installed from source.
 
 ![alt text](./domain_stats.gif "Installation and use")
 
+## Optional Load of top1m
+With the server up and running you can use ```domain-stats-utils``` to enhance the domain stats data.  For example, to use whois to patch records that RDAP was unable to resolve you can use the -f or --fix option.
+```
+$ domain-stats-utils -f /mydata
+```
+You can also avoid the initial (likely to be terms of service violating) volume of request to RDAP when you first start your server by prestaging a group of roughly 35K records from domains taken from the Cisco Umbrealla Projects top1m domains. WARNING: By choosing to place these domains in the 'seen database' you will not be alerted to the "FIRST CONTACT". That said, these are from the top 1 million most commonly used domains and you likely don't care about first contact with them.  To import these you again use domain-stats-utils. These records will be tagged with "top1m" in the "seen-by-isc" field.
+```
+$ domain-stats-utils -i domains-stats\data\top1m.import -nx /mydata
+```
+The -nx options says to never expire these records. If you leave that option off then the records will expire from the database with the domain registration expires.
+
+
 ## Install as a container
 
 To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 10000 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can go through the setup questions. If you do not know a better answer then the default just press ENTER. When it is finished run the container again with the -d and --name options as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
