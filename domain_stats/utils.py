@@ -135,10 +135,15 @@ def main():
     parser.add_argument("-nx","--no-expire", dest='noexpire', action="store_true", help="Set imported record never to expire instead of using domain expiration.")
     parser.add_argument("-v","--verbose",action="store_true", help="Be verbose in output.")
 
-    args = parser.parse_args('-e /home/student/domain_stats/test.export /home/student/dstest'.split())
+    args = parser.parse_args()
     #current directory must be set by launcher to the location of the config and database
+    yaml_file = args.data_folder + "/domain_stats.yaml"
+    if not pathlib.Path(yaml_file).is_file():
+        print("The specified data_folder does not contain a domain_stats.yaml configuration file.")
+        exit(1)
+    
     cache = ExpiringCache(args.data_folder)
-    config = Config( args.data_folder + "/domain_stats.yaml")
+    config = Config(yaml_file)
 
     establish_age = config.get("established_days_age",720)
     low_avg = config.get('freq_avg_alert',5.0)
@@ -196,7 +201,8 @@ def main():
         for each_entry in new_data:
             import_domain_rec(each_entry, args.noexpire)
     else:
-        print("Use either the --domains or --errors argument.")
+        print("What do you want me to do?")
+        parser.print_help()
 
     cache.cache.close()
 
