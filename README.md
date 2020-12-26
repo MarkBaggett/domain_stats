@@ -52,15 +52,15 @@ Here is what that looks like installed from source.
 ![alt text](./domain_stats.gif "Installation and use")
 
 ## Optional Load of top1m
-With the server up and running you can use ```domain-stats-utils``` to enhance the domain stats data.  For example, to use whois to patch records that RDAP was unable to resolve you can use the -f or --fix option.
+**With the server up and running** you can use ```domain-stats-utils``` to enhance the domain stats data.  For example, to use whois to patch records that RDAP was unable to resolve you can use the -f or --fix option.
 ```
-$ domain-stats-utils -f /mydata
+$ domain-stats-utils -f /path_to_data
 ```
-You can also avoid the initial (likely to be terms of service violating) volume of request to RDAP when you first start your server by prestaging a group of roughly 35K records from domains taken from the Cisco Umbrealla Projects top1m domains. WARNING: By choosing to place these domains in the 'seen database' you will not be alerted to the "FIRST CONTACT". That said, these are from the top 1 million most commonly used domains and you likely don't care about first contact with them.  To import these you again use domain-stats-utils. These records will be tagged with "top1m" in the "seen-by-isc" field.
+You can also avoid the initial (likely to be terms of service violating) volume of request to RDAP when you first start your server by prestaging a group of roughly 35K records from domains taken from the Cisco Umbrealla Projects top1m domains. **WARNING: By choosing to prepopulate these domains in the 'seen database' you will not be alerted to the "FIRST CONTACT" when someone visits them for the first time**. That said, these are from the top 1 million most commonly used domains and you likely don't care about first contact with them.  To import these you again use domain-stats-utils. These records will be tagged with "top1m" in the "seen-by-isc" field.
 ```
 $ domain-stats-utils -i domains-stats\data\top1m.import -nx /mydata
 ```
-The -nx options says to never expire these records. If you leave that option off then the records will expire from the database with the domain registration expires.
+The -nx options tells domain_stats to never expire these records from its cache. Without this option it will use its default behavior and the records will expire from the database when the domain registration expires.  For the top most commonly used established domains this will prevent you from unessisarily looking up the domain registration date every year for these sites.
 
 
 ## Install as a container
