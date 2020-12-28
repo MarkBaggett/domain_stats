@@ -62,16 +62,16 @@ $ domain-stats-utils -i domains-stats\data\top1m.import -nx /mydata
 ```
 The -nx options tells domain_stats to never expire these records from its cache. Without this option it will use its default behavior and the records will expire from the database when the domain registration expires.  For the top most commonly used established domains this will prevent you from unessisarily looking up the domain registration date every year for these sites.
 
+---
+## Install and runnning in a container
 
-## Install as a container
-
-To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 10000 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can go through the setup questions. If you do not know a better answer then the default just press ENTER. When it is finished run the container again with the -d and --name options as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
+To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 5730 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can go through the setup questions. One change you must make for a docker configuration is to change the default port from 127.0.0.1 to 0.0.0.0.   Otherwise, if you do not know a better answer then the default just press ENTER. When it is finished run the container again with the -d and --name options as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
  
 ```
 $ docker build --tag domain_stats_image http://github.com/markbaggett/domain_stats.git
 $ mkdir ~/dstat_data
-$ docker run -it --rm -v ~/dstat_data:/host_mounted_dir -p 8000:10000 domain_stats_image
-Set value for ip_address. Default=0.0.0.0 Current=0.0.0.0 (Enter to keep Current): 
+$ docker run -it --rm -v ~/dstat_data:/host_mounted_dir -p 8000:5730 domain_stats_image
+Set value for ip_address. Default=127.0.0.1 Current=127.0.0.1 (Enter to keep Current): 0.0.0.0 
 Set value for local_port. Default=5730 Current=5730 (Enter to keep Current): 
 Set value for workers. Default=3 Current=3 (Enter to keep Current): 
 Set value for threads_per_worker. Default=3 Current=3 (Enter to keep Current): 
@@ -85,8 +85,24 @@ Set value for freq_word_alert. Default=4.0 Current=4.0 (Enter to keep Current):
 Set value for log_detail. Default=0 Current=0 (Enter to keep Current): 
 Commit Changes to disk?y
 
-$ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:8000 domain_stats_image
+$ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:5730 domain_stats_image
 ```
+
+Once the container is running if you would like to change the settings or use the domain-stats-utils to import domains you can launch a second terminal process in the running image.  For example, here is how to import the top1m domains.  Always point domain-stats-utils and domain-stats-settings to /host_mounted_dir/ when inside the container.
+
+```
+$ docker exec -it domain_stats /bin/bash
+root@8f6561dc0766:/# domain-stats-utils -i /app/domain_stats/data/top1m.import -nx /host_mounted_dir/
+root@8f6561dc0766:/# exit
+```
+or 
+```
+$ docker exec -it domain_stats /bin/bash
+root@8f6561dc0766:/# domain-stats-settings /host_mounted_dir/
+root@8f6561dc0766:/# exit
+
+```
+---
 
 ## To Run domain_stats as a service
 If you are not going to use a docker you may want to run domain_stats as a server. After installing domain_stats as described above you can set it to run as a service on your system using the provided .service file in the data folder. It will be necessary to edit the domain_stats.service file and change the "WorkingDirectory" entry so that it points to the location you are storing your data. After editing the file add the ["domain_stats.service"](./domain_stats/data/domain_stats.service) file to your `/etc/systemd/system` folder.  Then use `systemctl enable domain_stats` to set it to start automatically. 
@@ -131,6 +147,7 @@ $ wget -q -O- http://127.0.0.1:5730/sans.org
  - SEEN_BY_ISC  - This may be one of a few possible values
    * RDAP      - When in RDAP mode this will contain the word RDAP
    * datetime  - When in ISC mode this will contain the date and time when the domain was first seen by the ISC
+   * top1m or other name - When domains are preloaded into your database with domain-stats-utils the name of the import is displayed here
    
  - SEEN_BY_WEB - This is the date when the domain was first seen on the internet (ie the registration date)
 

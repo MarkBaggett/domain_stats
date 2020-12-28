@@ -40,7 +40,7 @@ def setup_directory(tgt_folder):
         shutil.copy(source_folder / "data/freqtable2018.freq", tgt_folder)
     #create gunicorn config
     update_setting(config, "ip_address", "127.0.0.1")
-    update_setting(config, "local_port", "5730")
+    update_setting(config, "local_port", 5730)
     rec_workers = multiprocessing.cpu_count() * 2 + 1
     update_setting(config, "workers", rec_workers)
     rec_threads = multiprocessing.cpu_count() * 3
@@ -62,7 +62,10 @@ def setup_directory(tgt_folder):
         with file_path.open('w') as fp:
             yaml.dump(config, fp, default_flow_style=False)
         print("Configuration Written.")
-        print("If this is a new installation you might consider preloading the top1m.import file with domain-stats-utils.")
+        import_pth = str(source_folder / "data/top1m.import")
+        import_cmd = f"domain-stats-utils -i {import_pth} -nx {tgt_folder}"
+        print("If this is a new installation you might consider preloading the top1m.import file with domain-stats-utils after starting the server.")
+        print("Try: ",import_cmd)
     else:
         print("The configuration selected was not saved.")
 
