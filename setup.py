@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="domain_stats", 
-    version="0.1.0",
+    version="1.0.0",
     author="MarkBaggett",
     author_email="lo127001@gmail.com",
     description="Malicious Domain Detection base on domain creation and first contact",
@@ -14,7 +14,16 @@ setuptools.setup(
     url="https://github.com/markbaggett/domain_stats",
     license = "GNU General Public License v3 (GPLv3",
     packages=setuptools.find_packages(),
-    install_requires = ['requests','pyyaml', 'rdap', 'python-dateutil>2.7','publicsuffixlist','flask','gunicorn', 'diskcache'],
+    install_requires = [
+        'diskcache>=5.1.0',
+        'Flask>=1.1.2',
+        'gunicorn>=20.0.4',
+        'publicsuffixlist>=0.7.6',
+        'python-dateutil==2.8.1',
+        'PyYAML==5.3.1',
+        'rdap==1.1.0',
+        'requests==2.25.1'
+        ],
     include_package_data = True,
     classifiers=[
         "Programming Language :: Python :: 3",
