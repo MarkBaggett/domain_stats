@@ -22,7 +22,7 @@ export {
         ts: time             &log;
         uid: string          &log;
         query: string        &log;
-        alert: string        &log;
+        alerts: string        &log;
         category: string     &log;
         freq_avg_prob: string &log;
         freq_word_prob: string &log;
@@ -54,7 +54,7 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
             when (local res = ActiveHTTP::request(request)) {
                 if (|res| > 0) {
                     if (res?$body && |split_string(res$body,/,/)| > 2) {
-                        local resbody = fmt("%s", data);
+                        local resbody = fmt("%s", res?$body);
                         local alerts_entry = split_string(resbody,/,\"category/)[0];
                         local alerts = strip(gsub(split_string(alerts_entry,/:/)[1],/\"/,""));
                         local cat_entry = split_string(resbody, /\",\"freq/)[0];
