@@ -12,7 +12,7 @@ export {
     # Set to F or comment before adding to production
     # redef exit_only_after_terminate = T;
 
-    global domainstats_url = "http://localhost:8000/"; # add desired DS url here
+    global domainstats_url = "http://localhost:5730/"; # add desired DS url here
     global ignore_domains = set(".rdap.net"); # add domains to exclude here
     global queried_domains: table[string] of count &default=0 &create_expire=1days; # keep state of domains to prevent duplicate queries
     global domain_suffixes = /MATCH_NOTHING/; # idea borrowed from: https://github.com/theflakes/bro-large_uploads
@@ -22,11 +22,13 @@ export {
         ts: time             &log;
         uid: string          &log;
         query: string        &log;
+        alert: string        &log;
+        category: string     &log;
+        freq_avg_prob: string &log;
+        freq_word_prob: string &log;
         seen_by_web: string  &log;
         seen_by_isc: string   &log;
         seen_by_you: string  &log;
-        category: string         &log;
-        other: string        &log &optional;
     };
 }    
 
@@ -52,18 +54,22 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
             when (local res = ActiveHTTP::request(request)) {
                 if (|res| > 0) {
                     if (res?$body && |split_string(res$body,/,/)| > 2) {
-                        local resbody = fmt("%s", res$body);
-                        local seen_by_web_parse = gsub(split_string(resbody,/,/)[0],/\{/,"");
-                        local seen_by_web_date = strip(split_string1(gsub(split_string1(seen_by_web_parse,/:/)[1],/\"/,""),/\./)[0]); 
-                        local seen_by_isc_parse = split_string(resbody,/,/)[1];
-                        local seen_by_isc_date = strip(split_string1(gsub(split_string1(seen_by_isc_parse,/:/)[1],/\"/,""),/\./)[0]); 
-                        local seen_by_you_parse = split_string(resbody,/,/)[2];
-                        local seen_by_you_date = strip(split_string1(gsub(split_string1(seen_by_you_parse,/:/)[1],/\"/,""),/\./)[0]); 
-                        local cat_parse = split_string(resbody,/,/)[3];
-                        local cat_num = strip(gsub(split_string(cat_parse,/:/)[1],/\"/,"")); 
-                        local other_parse = gsub(split_string(resbody,/,/)[4],/\}|\{/,"");
-                        local other_info = strip(gsub(split_string(other_parse,/:/)[1],/\"/,"")); 
-                        local rec: DomainStats::Info = [$ts=c$start_time, $uid=c$uid, $query=domain, $seen_by_web=seen_by_web_date, $seen_by_isc=seen_by_isc_date, $seen_by_you=seen_by_you_date, $category=cat_num, $other=other_info]; 
+                        local resbody = fmt("%s", data);
+                        local alerts_entry = split_string(resbody,/,\"category/)[0];
+                        local alerts = strip(gsub(split_string(alerts_entry,/:/)[1],/\"/,""));
+                        local cat_entry = split_string(resbody, /\",\"freq/)[0];
+                        local cat_string = split_string( cat_entry, /category\":\"/ )[1];
+                        local freq_entry = split_string(resbody, /\],\"seen_by_isc/)[0];
+                        freq_entry = split_string(freq_entry, /freq\":\[/)[1];
+                        local freq_avg_prob = split_string( freq_entry, /,/)[0];
+                        local freq_word_prob = split_string( freq_entry, /,/)[1];
+                        local seen_by_isc_entry = split_string(resbody,/\",\"seen_by_web/)[0];
+                        local seen_by_isc_date = split_string(seen_by_isc_entry,/seen_by_isc\":\"/)[1];
+                        local seen_by_web_entry = split_string(resbody,/\",\"seen_by_you/)[0];
+                        local seen_by_web_date = split_string(seen_by_web_entry,/by_web\":\"/)[1];
+                        local seen_by_you_entry = split_string(resbody,/seen_by_you\":\"/)[1];
+                        local seen_by_you_date = split_string(seen_by_you_entry,/\"/)[0];
+                        local rec: DomainStats::Info = [$ts=c$start_time, $uid=c$uid, $query=domain, $seen_by_web=seen_by_web_date, $seen_by_isc=seen_by_isc_date, $seen_by_you=seen_by_you_date, $category=cat_string, $alerts=alerts,$freq_avg_prob=freq_avg_prob, $freq_word_prob=freq_word_prob];
                         Log::write(DomainStats::LOG, rec);
                     }
                 }
