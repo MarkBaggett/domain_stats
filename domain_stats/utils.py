@@ -59,7 +59,7 @@ def import_domain_rec(import_rec, never_expire=False):
     if not never_expire and record_expires:
         expire = datetime.datetime.fromtimestamp(record_expires).replace(tzinfo=datetime.timezone.utc) - now
         expire = expire.total_seconds()   
-    resp = to_json(**{"seen_by_web":created , "seen_by_isc":isc_tag, "seen_by_you":now, "category":category, "alerts":alerts, "freq": freq})
+    resp = to_json(**{"seen_by_web":created , "seen_by_isc":isc_tag, "seen_by_you":now, "category":category, "alerts":alerts, "freq_score": freq})
     if args.verbose:
         print(f"Patchup record for {domain} \nTo {resp}")
     cache.cache.set( domain, resp, expire= expire, tag=isc_tag)
