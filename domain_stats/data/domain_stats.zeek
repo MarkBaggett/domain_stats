@@ -22,13 +22,17 @@ export {
         ts: time             &log;
         uid: string          &log;
         query: string        &log;
-        alerts: string        &log;
+        alerts: string        &log; &optional;
         category: string     &log;
         freq_avg_prob: string &log;
         freq_word_prob: string &log;
         seen_by_web: string  &log;
         seen_by_isc: string   &log;
         seen_by_you: string  &log;
+    };
+
+    redef record connection += {
+        domainstats : Info &optional;
     };
 }    
 
@@ -52,17 +56,27 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
             ];
             queried_domains[domain] = 1;
             when (local res = ActiveHTTP::request(request)) {
+                print res?$body;
                 if (|res| > 0) {
                     if (res?$body && |split_string(res$body,/,/)| > 2) {
-                        local resbody = fmt("%s", res?$body);
+                        local resbody = fmt("%s", res$body);
                         local alerts_entry = split_string(resbody,/,\"category/)[0];
-                        local alerts = strip(gsub(split_string(alerts_entry,/:/)[1],/\"/,""));
+                        local alerts = split_string(alerts_entry,/:/)[1];
                         local cat_entry = split_string(resbody, /\",\"freq/)[0];
                         local cat_string = split_string( cat_entry, /category\":\"/ )[1];
-                        local freq_entry = split_string(resbody, /\],\"seen_by_isc/)[0];
-                        freq_entry = split_string(freq_entry, /freq\":\[/)[1];
-                        local freq_avg_prob = split_string( freq_entry, /,/)[0];
-                        local freq_word_prob = split_string( freq_entry, /,/)[1];
+                        local freq_entry = split_string(resbody, /,\"seen_by_isc/)[0];
+                        freq_entry = split_string(freq_entry, /freq\":/)[1];
+                        if (/\[[[:digit:].]+, ?[[:digit:].]+\]/ == freq_entry)
+                            {
+                            freq_entry = freq_entry[1:-1]
+                            local freq_avg_prob = split_string( freq_entry, /,/)[0];
+                            local freq_word_prob = split_string( freq_entry, /,/)[1];
+                            }
+                        else
+                            {
+                            local freq_avg_prob = freq_entry;
+                            local freq_word_prob = freq_entry;
+                            }
                         local seen_by_isc_entry = split_string(resbody,/\",\"seen_by_web/)[0];
                         local seen_by_isc_date = split_string(seen_by_isc_entry,/seen_by_isc\":\"/)[1];
                         local seen_by_web_entry = split_string(resbody,/\",\"seen_by_you/)[0];
