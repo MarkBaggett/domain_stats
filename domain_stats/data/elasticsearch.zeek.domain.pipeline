@@ -1,0 +1,90 @@
+PUT _ingest/pipeline/zeek.domainstats
+{
+    "description" : "zeek.domainstats",
+    "processors" : [
+      {
+        "remove" : {
+          "field" : [
+            "host"
+          ],
+          "ignore_failure" : true
+        }
+      },
+      {
+        "json" : {
+          "field" : "message",
+          "target_field" : "message2",
+          "ignore_failure" : true
+        }
+      },
+            {
+        "remove" : {
+          "field" : [
+            "message"
+          ],
+          "ignore_failure" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.alerts",
+          "target_field" : "alerts",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.seen_by_isc",
+          "target_field" : "seen_by_isc",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.seen_by_web",
+          "target_field" : "seen_by_web",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.seen_by_you",
+          "target_field" : "seen_by_you",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.category",
+          "target_field" : "category",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.query",
+          "target_field" : "domain",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.freq_avg_prob",
+          "target_field" : "freq_avg_prob",
+          "ignore_missing" : true
+        }
+      },
+      {
+        "rename" : {
+          "field" : "message2.freq_word_prob",
+          "target_field" : "freq_word_prob",
+          "ignore_missing" : true
+        }
+      },
+            {
+        "pipeline" : {
+          "name" : "zeek.common"
+        }
+      }
+    ]
+  }
