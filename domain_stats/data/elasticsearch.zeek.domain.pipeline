@@ -28,56 +28,56 @@ PUT _ingest/pipeline/zeek.domainstats
       {
         "rename" : {
           "field" : "message2.alerts",
-          "target_field" : "alerts",
+          "target_field" : "domainstats.alerts",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.seen_by_isc",
-          "target_field" : "seen_by_isc",
+          "target_field" : "domainstats.seen_by_isc",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.seen_by_web",
-          "target_field" : "seen_by_web",
+          "target_field" : "domainstats.seen_by_web",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.seen_by_you",
-          "target_field" : "seen_by_you",
+          "target_field" : "domainstats.seen_by_you",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.category",
-          "target_field" : "category",
+          "target_field" : "domainstats.category",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.query",
-          "target_field" : "domain",
+          "target_field" : "domainstats.domain",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.freq_avg_prob",
-          "target_field" : "freq_avg_prob",
+          "target_field" : "domainstats.freq_avg_prob",
           "ignore_missing" : true
         }
       },
       {
         "rename" : {
           "field" : "message2.freq_word_prob",
-          "target_field" : "freq_word_prob",
+          "target_field" : "domainstats.freq_word_prob",
           "ignore_missing" : true
         }
       },
