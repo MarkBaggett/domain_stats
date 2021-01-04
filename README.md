@@ -85,7 +85,7 @@ Set value for freq_word_alert. Default=4.0 Current=4.0 (Enter to keep Current):
 Set value for log_detail. Default=0 Current=0 (Enter to keep Current): 
 Commit Changes to disk?y
 
-$ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:5730 domain_stats_image
+$ docker run -d --name domain_stats -v ~/dstat_data:/host_mounted_dir -p 8000:5730 --restart unless-stopped domain_stats_image
 ```
 
 Once the container is running if you would like to change the settings or use the domain-stats-utils to import domains you can launch a second terminal process in the running image.  For example, here is how to import the top1m domains.  Always point domain-stats-utils and domain-stats-settings to /host_mounted_dir/ when inside the container.
