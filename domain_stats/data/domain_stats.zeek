@@ -21,7 +21,7 @@ export {
         ts: time             &log;
         uid: string          &log;
         query: string        &log;
-        alerts: string        &log &optional;
+        alerts: vector of string  &log &optional;
         category: string     &log;
         freq_avg_prob: string &log;
         freq_word_prob: string &log;
@@ -55,11 +55,15 @@ event dns_request(c: connection, msg: dns_msg, query: string, qtype: count, qcla
             ];
             queried_domains[domain] = 1;
             when (local res = ActiveHTTP::request(request)) {
+                print res?$body;
                 if (|res| > 0) {
                     if (res?$body && |split_string(res$body,/,/)| > 2) {
                         local resbody = fmt("%s", res$body);
                         local alerts_entry = split_string(resbody,/,\"category/)[0];
-                        local alerts = split_string(alerts_entry,/:/)[1];
+                        alerts_entry = gsub(alerts_entry, /\"/, "");
+                        alerts_entry = gsub(alerts_entry, /\[/ ,"");
+                        alerts_entry = gsub(alerts_entry, /\]/, "");
+                        local alerts = split_string( split_string(alerts_entry,/alerts:/)[1], /,/);
                         local cat_entry = split_string(resbody, /\",\"freq/)[0];
                         local cat_string = split_string( cat_entry, /category\":\"/ )[1];
                         local freq_entry = split_string(resbody, /,\"seen_by_isc/)[0];
