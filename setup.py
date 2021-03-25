@@ -20,7 +20,7 @@ setuptools.setup(
         'gunicorn>=20.0.4',
         'publicsuffixlist>=0.7.6',
         'python-dateutil==2.8.1',
-        'PyYAML==5.3.1',
+        'PyYAML==5.4',
         'rdap==1.1.0',
         'requests==2.25.1'
         ],
