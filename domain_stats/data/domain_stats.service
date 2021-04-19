@@ -5,7 +5,7 @@ After=network.target
 [Service]
 #You may need to change the path so it points to where you are storing your data
 WorkingDirectory=/host_mounted_dir
-ExecStart=domain_stats ./
+ExecStart=domain-stats ./
 PIDFile=/var/run/domainstats.pid
 Restart=always
 

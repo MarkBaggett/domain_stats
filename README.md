@@ -39,12 +39,12 @@ $ python3 -m pip install .
 
 ## Configure and Start
 
-One the package is installed, make a directory that will be used to for storage of data and configuration files. Then run 'domain-stats-settings' and followd by 'domain-stats'. Both of those programs require you pass it the path to your data directory. The first command 'domain-stats-settings' creates or edits the required settings files. If you are not sure how to answer the questions just press enter and allow it to create the configuration files. The second command 'domain-stats' will run the server.
+One the package is installed, make a directory that will be used to for storage of data and configuration files. Then run 'domain-stats-settings' and followed by 'domain-stats'. Both of those programs require you pass it the path to your data directory. The first command 'domain-stats-settings' creates or edits the required settings files. If you are not sure how to answer the questions just press enter and allow it to create the configuration files. The second command 'domain-stats' will run the server.
 
 ```
 $ mkdir /mydata
 $ domain-stats-settings /mydata
-$ domain_stats /mydata
+$ domain-stats /mydata
 ```
 
 Here is what that looks like installed from source.
