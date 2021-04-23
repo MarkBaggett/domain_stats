@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="domain_stats", 
-    version="1.0.0",
+    version="1.0.1",
     author="MarkBaggett",
     author_email="lo127001@gmail.com",
     description="Malicious Domain Detection base on domain creation and first contact",
