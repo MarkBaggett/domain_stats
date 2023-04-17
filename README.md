@@ -63,7 +63,7 @@ $ domain-stats-utils -i domains-stats\data\top1m.import -nx /mydata
 The -nx options tells domain_stats to never expire these records from its cache. Without this option it will use its default behavior and the records will expire from the database when the domain registration expires.  For the top most commonly used established domains this will prevent you from unessisarily looking up the domain registration date every year for these sites.
 
 ---
-## Install and runnning in a container
+## Install and running in a container
 
 To get a container up and running with domain_stats `docker build` passing the git file as a url. The `docker run` command must mount a directory into the container as the folder "host_mounted_dir" and to TCP port 8000 so you can access the server. In the example below port 5730 on the docker server is forwarded to the domain_stats server running inside the container on port 8000. Run docker run once with the -it option so you can go through the setup questions. One change you must make for a docker configuration is to change the default port from 127.0.0.1 to 0.0.0.0.   Otherwise, if you do not know a better answer then the default just press ENTER. When it is finished run the container again with the -d and --name options as shown below. After that you can `docker stop domain_stats` and `docker start domain_stats` as needed.
  
