@@ -22,7 +22,7 @@ setuptools.setup(
         'python-dateutil>=2.8.1',
         'PyYAML>=5.3.1',
         'rdap>=1.1.0',
-        'requests==2.25.1'
+        'requests==2.31.0'
         ],
     include_package_data = True,
     classifiers=[
