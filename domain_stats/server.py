@@ -101,6 +101,14 @@ def cache_get():
     resp = cache.cache_get(domain)
     return jsonify(resp)
 
+@app.route("/depuny", methods=['GET'])
+def depunyfy():
+    domain = request.args.get('domain')
+    if not domain:
+        return jsonify({"text":"Try /depuny?domain=xn--yutube-wqf.com"})
+    resp = domain.encode('utf-8').decode('idna')
+    return jsonify(resp)
+
 @app.route("/<string:domain>", methods=['GET'])
 def get_domain(domain):
     log.debug("New Request for domain {0}.".format(domain) )
